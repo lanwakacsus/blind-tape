@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blind Tape</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chivo+Mono:wght@400;600;700&family=Rubik:wght@400;500;600;700&display=swap">
+<script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+<div id="app">
+  <section id="title" class="screen" aria-label="Title screen">
+    <canvas id="bgTape" aria-hidden="true"></canvas>
+    <div class="title-inner">
+      <h1 class="logo">Blind<span>Tape</span></h1>
+      <p class="tagline">The market runs on its own clock and you never see the next bar. Six trading bots race you on the same tape. Beat them, beat buy &amp; hold, and clear the season.</p>
+      <div class="howto">
+        <span><kbd>↑</kbd> or <kbd>L</kbd> go long</span>
+        <span><kbd>↓</kbd> or <kbd>S</kbd> go short</span>
+        <span><kbd>Space</kbd> go flat</span>
+        <span>hold <kbd>→</kbd> fast-forward</span>
+        <span><kbd>P</kbd> pause</span>
+      </div>
+      <section class="daily" aria-label="Daily challenge">
+        <div class="daily-l">
+          <div class="eyebrow" id="dailyEyebrow">Daily challenge</div>
+          <h2>Today's tape</h2>
+          <p class="small" style="margin:0">One market for everyone, new every day at 00:00 UTC. Your first run is the one that counts; quitting partway posts a DNF.</p>
+          <div class="mine" id="dailyMine"></div>
+          <div class="daily-btns" id="dailyBtns"></div>
+          <div class="small" id="dailyReset"></div>
+        </div>
+        <div style="min-width:0">
+          <div class="board-h"><b>TODAY'S BOARD</b><span class="small" id="boardCount"></span></div>
+          <ol class="board" id="boardMini"></ol>
+        </div>
+      </section>
+      <div class="season" id="season" aria-label="Season markets"></div>
+      <div class="title-actions">
+        <button class="btn primary" id="playBtn" type="button">Play</button>
+        <label class="btn" for="csvIn">Trade your own CSV</label>
+        <input class="file-in" id="csvIn" type="file" accept=".csv,text/csv,text/plain">
+        <button class="btn" id="seasonBtn" type="button">New season</button>
+        <span class="mono" id="starTotal" style="color:var(--gold)"></span>
+      </div>
+      <div class="err" id="csvErr" hidden></div>
+      <p class="small">Each market is 150 trading days, about a minute of play, and each one runs faster and wilder than the last. Earn at least one star to unlock the next. Every trade costs 0.10%.</p>
+    </div>
+  </section>
+
+  <section id="play" class="screen" hidden aria-label="Trading">
+    <header class="hud">
+      <button class="btn" id="menuBtn" type="button">Menu</button>
+      <div class="hud-title"><b id="lvlName">MARKET 1</b><span id="lvlSub"></span></div>
+      <div class="hud-prog" aria-hidden="true"><i id="prog"></i></div>
+      <span class="mono small" id="dayCount">Day 0</span>
+      <button class="btn" id="muteBtn" type="button" aria-pressed="false">Sound on</button>
+      <button class="btn" id="pauseBtn" type="button">Pause</button>
+    </header>
+    <div class="arena">
+      <div class="chartwrap" id="chartwrap">
+        <canvas id="live" aria-label="Live price chart"></canvas>
+        <div class="pnl"><div class="pnl-v" id="pnl">+0.00%</div><div class="pnl-sub"><span class="chip" id="posChip">FLAT</span><span class="chip streak" id="streakChip" hidden></span></div></div>
+        <div class="callout" id="callout" hidden></div>
+        <div class="overlay" id="overlay" hidden></div>
+      </div>
+      <aside class="ladder" aria-label="Race standings"><div class="lad-h">RACE</div><ol id="ladder"></ol></aside>
+    </div>
+    <footer class="pad">
+      <button class="act short" data-p="-1" type="button" aria-pressed="false">SHORT<small>↓ / S</small></button>
+      <button class="act flat" data-p="0" type="button" aria-pressed="true">FLAT<small>SPACE</small></button>
+      <button class="act long" data-p="1" type="button" aria-pressed="false">LONG<small>↑ / L</small></button>
+      <button class="act ff" id="ffBtn" type="button" aria-pressed="false" aria-label="Hold to fast-forward">»<small>HOLD →</small></button>
+    </footer>
+  </section>
+
+  <section id="debrief" class="screen" hidden aria-label="Round debrief">
+    <div class="deb">
+      <div id="debHead"></div>
+      <div class="deb-actions" id="debActions"></div>
+      <div class="daily-deb" id="dailyDeb" hidden>
+        <div class="box">
+          <div class="box-h"><h3>Share your run</h3><button class="btn" id="copyBtn" type="button">Copy result</button></div>
+          <textarea class="sharebox" id="shareText" readonly aria-label="Shareable result"></textarea>
+          <p class="note" id="postNote"></p>
+        </div>
+        <div class="box">
+          <div class="board-h"><b>TODAY'S BOARD</b><span class="small" id="boardCount2"></span></div>
+          <ol class="board" id="boardFull"></ol>
+        </div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabRaceBtn" aria-selected="true" type="button">Race replay</button>
+        <button class="tab" role="tab" id="tabLabBtn" aria-selected="false" type="button">Backtest lab</button>
+      </div>
+      <div id="tabRace" style="display:flex;flex-direction:column;gap:18px">
+        <div class="box">
+          <div class="box-h"><h3>The tape, revealed</h3><div class="sel"><label for="shadeSel">Show trades of</label><select id="shadeSel"></select></div></div>
+          <canvas id="debPrice" aria-label="Full price chart with trades"></canvas>
+        </div>
+        <div class="race-grid">
+          <div class="box"><div class="box-h"><h3>Equity race</h3></div><canvas id="debEq" aria-label="Equity curves"></canvas></div>
+          <div class="box"><div class="box-h"><h3>Standings</h3><span class="small">Click a row to see its trades</span></div>
+            <div class="tbl-wrap"><table><thead><tr><th>Racer</th><th>Return</th><th>Sharpe</th><th>Max DD</th><th>Trades</th><th>In mkt</th></tr></thead><tbody id="tbody"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+      <div id="tabLab" hidden>
+        <div class="lab">
+          <div class="cards" id="cards"></div>
+          <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+            <div class="box">
+              <div class="box-h"><h3>How the bots work</h3></div>
+              <p class="note">Each bot is a rule backtested on this exact tape. It decides at each daily close using only past bars and pays the same 0.10% per trade. Change a bot's settings and the standings update. <b>Your settings carry into your next market</b>, so you build the opponents you race.</p>
+            </div>
+            <div class="box">
+              <div class="box-h"><h3>CROSS parameter sweep</h3><span class="small">% return per fast/slow pair</span></div>
+              <div class="heat-wrap"><div class="heat" id="heat"></div></div>
+              <p class="note" id="heatNote"></p>
+            </div>
+            <div class="box">
+              <div class="box-h"><h3>Out-of-sample check</h3><button class="btn" id="robBtn" type="button">Run on 100 fresh markets</button></div>
+              <p class="note" id="robNote">A setting that won here may have just fit this one path. Run every enabled bot, with its current settings, on 100 new markets it has never seen.</p>
+              <div class="tbl-wrap" id="robWrap" hidden><table><thead><tr><th>Bot</th><th>Median</th><th>Mean</th><th>Worst</th><th>Beat B&amp;H</th><th>Sharpe</th></tr></thead><tbody id="robBody"></tbody></table></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
