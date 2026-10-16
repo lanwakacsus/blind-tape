@@ -54,6 +54,10 @@ npm run preview    # serve the built file
 
 `npm run build` inlines all JavaScript and CSS into `dist/blind-tape.html` (via `vite-plugin-singlefile`), so the result can be published as a single claude.ai artifact.
 
+### Hosting on Vercel
+
+`vercel.json` builds the project and serves `blind-tape.html` at `/`. Import the repo at vercel.com/new, or run `npx vercel` in this folder. The shared daily board only works on claude.ai; elsewhere, daily results are kept in each player's browser.
+
 ### Layout
 
 | Folder | What's there |
