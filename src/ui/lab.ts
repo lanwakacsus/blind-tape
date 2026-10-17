@@ -1,12 +1,13 @@
 /* Backtest lab tab: bot cards with editable settings, the CROSS parameter sweep heatmap and
  * the out-of-sample check on 100 fresh markets. */
 
-import type { Market } from '../engine/market';
-import { SWEEP_FAST, SWEEP_SLOW, outOfSample, smaSweep, type OutOfSampleRow } from '../engine/research';
+import { stats } from '../engine/backtest';
+import { genMarket, type Market } from '../engine/market';
+import { SWEEP_FAST, SWEEP_SLOW, outOfSample, smaSweep, snapshotTuning, type OutOfSampleRow } from '../engine/research';
 import { STRATS, strategy, type NumberParam, type ParamDef, type Strategy, type StrategyId } from '../engine/strategies';
 import { pct, signClass } from '../format';
-import { computeBots, game, type Round } from '../game/round';
-import { lab, persist } from '../game/save';
+import { computeBots, game, startRound, type Round } from '../game/round';
+import { lab, persist, randomSeed } from '../game/save';
 import { $, classes, fill, h } from './dom';
 
 const ROBUST_INTRO =
@@ -181,6 +182,18 @@ function runRobust(): void {
   fill($('#robNote'), `100 new markets with ${how}. Highest median: `, h('b', null, rows[0].S.call), ` at ${pct(rows[0].median)}.`);
 }
 
+/* ---------- hidden tape ---------- */
+
+/** Freezes the current settings and their results on this tape, then plays a fresh market
+ *  of the same difficulty. The debrief compares the two. */
+function playHidden(): void {
+  const r = game.round;
+  if (!r) return;
+  const proof = { tuning: snapshotTuning(game.bots, lab), youRet: stats(r.eqBars).ret };
+  const opts = r.m.csv ? {} : r.m.opts;
+  startRound(genMarket(randomSeed(), opts), r.lvl, 'proof', proof);
+}
+
 /* ---------- tab ---------- */
 
 export function renderLab(r: Round, bhRet: number): void {
@@ -198,4 +211,5 @@ export function initLab(onChange: () => void): void {
   onLabChange = onChange;
   fill($('#cards'), ...STRATS.map(card));
   $('#robBtn').addEventListener('click', runRobust);
+  $('#proofBtn').addEventListener('click', playHidden);
 }

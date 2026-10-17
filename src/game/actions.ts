@@ -23,7 +23,8 @@ export function playDaily(ranked: boolean): void {
 /** Plays the same tape again. A daily tape replays as practice. */
 export function replay(r: Round): void {
   const { m, lvl, mode } = r;
-  if (isDailyMode(mode)) startRound(dailyMarket(m.day!), null, 'practice');
+  if (mode === 'proof') startRound(genMarket(m.seed!, m.opts), lvl, mode, r.proof);
+  else if (isDailyMode(mode)) startRound(dailyMarket(m.day!), null, 'practice');
   else if (lvl == null) startRound(makeMarket({ ...m }), lvl, mode);
   else startRound(genMarket(m.seed!, m.opts), lvl, mode);
 }

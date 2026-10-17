@@ -31,9 +31,12 @@ let calloutTimer: ReturnType<typeof setTimeout> | undefined;
 function roundStarted(r: Round): void {
   clearTimeout(countdownTimer);
   const { m, lvl, mode } = r;
-  $('#lvlName').textContent = isDailyMode(mode) ? `DAILY #${dailyNo(m.day!)}` : lvl == null ? m.name! : `MARKET ${lvl + 1}`;
+  $('#lvlName').textContent =
+    mode === 'proof' ? 'HIDDEN TAPE' : isDailyMode(mode) ? `DAILY #${dailyNo(m.day!)}` : lvl == null ? m.name! : `MARKET ${lvl + 1}`;
   $('#lvlSub').textContent =
-    mode === 'daily' ? 'Ranked run' : mode === 'practice' ? 'Practice, not ranked' : lvl == null ? 'Your CSV' : LEVELS[lvl].sub;
+    mode === 'proof'
+      ? 'Your tuned bots have never seen this'
+      : mode === 'daily' ? 'Ranked run' : mode === 'practice' ? 'Practice, not ranked' : lvl == null ? 'Your CSV' : LEVELS[lvl].sub;
   $('#pauseBtn').textContent = 'Pause';
   showScreen('play');
   buildLadder();

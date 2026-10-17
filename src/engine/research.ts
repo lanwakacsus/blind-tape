@@ -3,7 +3,7 @@
 
 import { backtest, stats, type BacktestResult, type Stats } from './backtest';
 import { genMarket, type Market, type MarketOptions } from './market';
-import { STRATS, strategy, type Params, type Position, type Strategy, type StrategyId } from './strategies';
+import { STRATS, defaultParams, strategy, type Params, type Position, type Strategy, type StrategyId } from './strategies';
 
 export interface BotSetting {
   on: boolean;
@@ -91,4 +91,49 @@ export function outOfSample(m: Market, lab: LabSettings, count = 100): OutOfSamp
       };
     })
     .sort((a, b) => b.median - a.median);
+}
+
+/** Share of tradable bars on which two position series hold the same position. */
+export function agreement(a: readonly Position[], b: readonly Position[], m: Market): number {
+  let same = 0;
+  for (let t = m.warm - 1; t < m.n - 1; t++) if ((a[t] || 0) === (b[t] || 0)) same++;
+  return same / (m.n - m.warm);
+}
+
+/** Bot settings and in-sample results frozen at the moment a hidden tape starts. */
+export interface TuningSnapshot {
+  bots: { id: StrategyId; params: Params; ret: number }[];
+}
+
+export interface TuningRow {
+  S: Strategy;
+  /** Settings differ from the defaults. */
+  tuned: boolean;
+  /** Return on the tape the settings were tuned on. */
+  before: number;
+  /** Return of the same settings on the hidden tape. */
+  after: number;
+}
+
+/** Records every enabled bot (plus buy & hold) with its current settings and result. */
+export function snapshotTuning(bots: readonly BotResult[], settings: LabSettings): TuningSnapshot {
+  return {
+    bots: bots
+      .filter((b) => settings[b.S.id].on || b.S.id === 'bh')
+      .map((b) => ({ id: b.S.id, params: { ...settings[b.S.id].params }, ret: b.st.ret })),
+  };
+}
+
+/** Re-runs the frozen settings on a hidden tape, beside their in-sample results. */
+export function tuningCheck(snap: TuningSnapshot, hidden: Market): TuningRow[] {
+  return snap.bots.map(({ id, params, ret }) => {
+    const S = strategy(id);
+    const defaults = defaultParams(S);
+    return {
+      S,
+      tuned: Object.keys(defaults).some((k) => defaults[k] !== params[k]),
+      before: ret,
+      after: runBot(S, hidden, params).st.ret,
+    };
+  });
 }

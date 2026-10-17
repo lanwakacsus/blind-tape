@@ -97,9 +97,19 @@
         <button class="tab" role="tab" id="tabLabBtn" aria-selected="false" type="button">Backtest lab</button>
       </div>
       <div id="tabRace" style="display:flex;flex-direction:column;gap:18px">
+        <div class="box" id="proofBox" hidden>
+          <div class="box-h"><h3>Tuning check</h3><span class="small">same settings, a tape they never saw</span></div>
+          <p class="note" id="proofNote"></p>
+          <div class="tbl-wrap"><table><thead><tr><th>Racer</th><th>Settings</th><th>Tuned tape</th><th>Hidden tape</th><th>Change</th></tr></thead><tbody id="proofBody"></tbody></table></div>
+        </div>
         <div class="box">
           <div class="box-h"><h3>The tape, revealed</h3><div class="sel"><label for="shadeSel">Show trades of</label><select id="shadeSel"></select></div></div>
           <canvas id="debPrice" aria-label="Full price chart with trades"></canvas>
+        </div>
+        <div class="box" id="replayBox">
+          <div class="box-h"><h3>Your round as a strategy</h3><span class="small">your positions run through the same backtester as the bots</span></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Run</th><th>Return</th><th>Sharpe</th><th>Max DD</th><th>Trades</th><th>In mkt</th></tr></thead><tbody id="replayBody"></tbody></table></div>
+          <p class="note" id="replayNote"></p>
         </div>
         <div class="race-grid">
           <div class="box"><div class="box-h"><h3>Equity race</h3></div><canvas id="debEq" aria-label="Equity curves"></canvas></div>
@@ -120,6 +130,10 @@
               <div class="box-h"><h3>CROSS parameter sweep</h3><span class="small">% return per fast/slow pair</span></div>
               <div class="heat-wrap"><div class="heat" id="heat"></div></div>
               <p class="note" id="heatNote"></p>
+            </div>
+            <div class="box">
+              <div class="box-h"><h3>Hidden tape</h3><button class="btn" id="proofBtn" type="button">Play a hidden tape</button></div>
+              <p class="note">The check below is statistics; this one you play. Your settings are frozen as they are now, you trade a fresh market of the same difficulty, and the debrief puts each bot's result there beside the result on the tape you tuned it on.</p>
             </div>
             <div class="box">
               <div class="box-h"><h3>Out-of-sample check</h3><button class="btn" id="robBtn" type="button">Run on 100 fresh markets</button></div>

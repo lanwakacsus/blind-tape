@@ -3,14 +3,14 @@
 
 import { FEE } from '../engine/backtest';
 import { DAILY, LEVELS, type Bar, type Market } from '../engine/market';
-import { runBots, type BotResult } from '../engine/research';
+import { runBots, type BotResult, type TuningSnapshot } from '../engine/research';
 import type { Position } from '../engine/strategies';
 import { pct } from '../format';
 import { lab } from './save';
 import { beep } from './sound';
 
 export type Phase = 'idle' | 'countdown' | 'run' | 'paused' | 'over';
-export type Mode = 'season' | 'daily' | 'practice' | 'csv';
+export type Mode = 'season' | 'daily' | 'practice' | 'csv' | 'proof';
 export type FxKind = 'up' | 'down' | 'gold' | 'ink';
 
 export interface Trade {
@@ -23,11 +23,20 @@ export interface Trade {
   to: Position;
 }
 
+/** What a hidden-tape round compares against: the tape the bots were tuned on. */
+export interface Proof {
+  tuning: TuningSnapshot;
+  /** The player's return on that earlier tape. */
+  youRet: number;
+}
+
 export interface Round {
   m: Market;
   /** Season market index, or null for daily and CSV tapes. */
   lvl: number | null;
   mode: Mode;
+  /** Set for hidden-tape rounds. */
+  proof: Proof | null;
   phase: Phase;
   /** Milliseconds per bar at normal speed. */
   ms: number;
@@ -91,12 +100,13 @@ export function computeBots(m: Market): void {
   game.bots = runBots(m, lab);
 }
 
-export function startRound(m: Market, lvl: number | null, mode: Mode): void {
+export function startRound(m: Market, lvl: number | null, mode: Mode, proof: Proof | null = null): void {
   const ms = isDailyMode(mode) ? DAILY.ms : lvl == null ? 300 : LEVELS[lvl].ms;
   const r: Round = {
     m,
     lvl,
     mode,
+    proof,
     phase: 'countdown',
     ms,
     bar: m.warm - 1,

@@ -1,7 +1,9 @@
 /* Round debrief: result header and stars, next/retry buttons, the revealed tape, the equity
  * race and the standings table. The backtest lab tab lives in lab.ts. */
 
+import { backtest, stats, type Stats } from '../engine/backtest';
 import { LEVELS, REGIMES, type Market } from '../engine/market';
+import { agreement, tuningCheck } from '../engine/research';
 import { STRATS } from '../engine/strategies';
 import { canPost, finishDailyRun } from '../daily/remote';
 import { dailyNo, dayLabel } from '../daily/dates';
@@ -69,6 +71,7 @@ function headline(r: Round, cleared: boolean): string {
   const { mode, lvl } = r;
   if (mode === 'daily') return canPost() ? 'Run posted' : 'Run saved';
   if (mode === 'practice') return 'Practice run';
+  if (mode === 'proof') return 'Hidden tape finished';
   if (lvl == null) return 'Tape finished';
   if (!cleared) return 'Not cleared';
   return lvl === LEVELS.length - 1 ? 'Season cleared' : 'Market cleared';
@@ -76,6 +79,7 @@ function headline(r: Round, cleared: boolean): string {
 
 function eyebrow(r: Round): string {
   const { m, mode, lvl } = r;
+  if (mode === 'proof') return 'Tuning check · fresh market';
   if (isDailyMode(mode)) return `Daily #${dailyNo(m.day!)} · ${dayLabel(m.day!)}` + (mode === 'practice' ? ' · practice' : '');
   if (lvl == null) return m.name!;
   return `Market ${lvl + 1} · ${LEVELS[lvl].sub}`;
@@ -210,6 +214,89 @@ function standingRow(row: StandingRow): HTMLTableRowElement {
   );
 }
 
+function statsRow(label: string, st: Stats, trades: number, exposure: number): HTMLTableRowElement {
+  return h(
+    'tr',
+    null,
+    h('td', null, h('b', null, label)),
+    h('td', { class: signClass(st.ret) }, pct(st.ret)),
+    h('td', null, st.sharpe.toFixed(2)),
+    h('td', null, pct(st.dd)),
+    h('td', null, trades),
+    h('td', null, Math.round(exposure * 100) + '%'),
+  );
+}
+
+/** Runs the player's end-of-bar positions through the bots' backtester and finds the bot
+ *  they most resembled. */
+function renderPlayerReplay(r: Round, s: RoundScore): void {
+  const bt = backtest(r.posBars, r.m);
+  const st = stats(bt.eq);
+  fill($('#replayBody'), statsRow('As played', s.ys, r.nTrades, playerExposure(r)), statsRow('Backtested', st, bt.trades, bt.exposure));
+
+  const field = game.bots.filter((b) => lab[b.S.id].on && b.S.id !== 'bh');
+  const note = $('#replayNote');
+  if (!field.length) {
+    fill(note, 'Backtested: every position change is assumed to happen at the close, as it does for the bots. Any gap to the live result comes from trading inside a bar.');
+    return;
+  }
+  const ranked = field.map((b) => ({ b, same: agreement(r.posBars, b.pos, r.m) })).sort((a, b) => b.same - a.same);
+  const twin = ranked[0];
+  const best = field.reduce((a, b) => (b.st.ret > a.st.ret ? b : a));
+  fill(
+    note,
+    'Backtested assumes every position change happens at the close, as it does for the bots; the gap to the live result is trading inside a bar. You held the same position as ',
+    h('b', null, twin.b.S.call),
+    ` on ${Math.round(twin.same * 100)}% of bars (it returned ${pct(twin.b.st.ret)}). `,
+    ...(best.st.ret > st.ret
+      ? ['A fixed rule did better: ', h('b', null, best.S.call), ` returned ${pct(best.st.ret)} against your ${pct(st.ret)}.`]
+      : [`None of the bots beat your backtested ${pct(st.ret)}.`]),
+  );
+}
+
+function renderProof(r: Round): void {
+  const box = $('#proofBox');
+  box.hidden = !r.proof;
+  if (!r.proof) return;
+  const rows = tuningCheck(r.proof.tuning, r.m);
+  const youNow = stats(r.eqBars).ret;
+  const tuned = rows.filter((row) => row.tuned);
+  const pool = tuned.length ? tuned : rows.filter((row) => row.S.id !== 'bh');
+  const avg = (f: (row: (typeof rows)[number]) => number) => (pool.length ? pool.reduce((a, row) => a + f(row), 0) / pool.length : 0);
+  const [before, after] = [avg((row) => row.before), avg((row) => row.after)];
+  fill(
+    $('#proofNote'),
+    tuned.length ? 'Your tuned bots' : 'Your bots (none were tuned)',
+    ` averaged ${pct(before)} on the tape you tuned them on and `,
+    h('b', { class: signClass(after) }, pct(after)),
+    ` on this one. ${before - after > 0.01 ? 'What a settings search finds on one path mostly fails to carry over.' : 'Here the edge carried over; one hidden tape is still just one sample.'}`,
+  );
+  const change = (v: number) => h('td', { class: signClass(v) }, (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + ' pts');
+  fill(
+    $('#proofBody'),
+    ...rows.map((row) =>
+      h(
+        'tr',
+        null,
+        h('td', null, h('span', { class: 'sw', style: `background:var(${row.S.color})` }), h('b', null, row.S.call)),
+        h('td', null, row.tuned ? 'tuned' : 'default'),
+        h('td', { class: signClass(row.before) }, pct(row.before)),
+        h('td', { class: signClass(row.after) }, pct(row.after)),
+        change(row.after - row.before),
+      ),
+    ),
+    h(
+      'tr',
+      null,
+      h('td', null, h('span', { class: 'sw', style: 'background:var(--accent)' }), h('b', null, 'You')),
+      h('td', null, '—'),
+      h('td', { class: signClass(r.proof.youRet) }, pct(r.proof.youRet)),
+      h('td', { class: signClass(youNow) }, pct(youNow)),
+      change(youNow - r.proof.youRet),
+    ),
+  );
+}
+
 /** Redraws the active tab; called on tab switches, lab changes and resizes. */
 export function renderDebrief(): void {
   const r = game.round;
@@ -219,6 +306,8 @@ export function renderDebrief(): void {
     renderLab(r, s.bhRet);
     return;
   }
+  renderProof(r);
+  renderPlayerReplay(r, s);
   const rows = standings(r, s);
   $<HTMLSelectElement>('#shadeSel').value = view.shade;
   fill($('#tbody'), ...rows.map(standingRow));
