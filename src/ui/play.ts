@@ -10,6 +10,7 @@ import { body as diaryBody, randomEntry, stamp } from '../game/diary';
 import { dayLabel as isoLabel } from '../game/quotes';
 import { OMENS, OMEN_FALLBACK } from '../game/lore';
 import { riskReward } from '../game/review';
+import { bpmFor, setTempo } from '../game/music';
 import { sfx } from '../game/sound';
 import { lab, progress, save } from '../game/save';
 import {
@@ -25,7 +26,9 @@ import {
   type Round,
 } from '../game/round';
 import { drawLive } from '../render/liveChart';
-import { $, $$, fill, h, kbd, type Child } from './dom';
+import { $, $$, fill, h, icon, kbd, type Child } from './dom';
+import { CHART_PHOTO, credit, photo } from '../game/credits';
+import { SRC } from './photos';
 import { currentScreen, showScreen } from './screens';
 
 let countdownTimer: ReturnType<typeof setTimeout> | undefined;
@@ -43,7 +46,17 @@ function roundStarted(r: Round): void {
       ? isoLabel(m.day!)
       : mode === 'proof'
       ? 'Your tuned bots have never seen this'
-      : mode === 'daily' ? 'Ranked run' : mode === 'practice' ? 'Practice, not ranked' : lvl == null ? 'Your CSV' : LEVELS[lvl].sub;
+      : mode === 'daily' ? 'Ranked run' : mode === 'practice' ? 'Practice, not ranked' : lvl == null ? 'Your CSV' : `${LEVELS[lvl].ticker} \u00b7 ${LEVELS[lvl].sub}`;
+  const shot = photo(CHART_PHOTO[lvl ?? CHART_PHOTO.length - 1]);
+  fill(
+    $('#chartArt'),
+    h('img', { class: 'art shot', src: SRC[shot.id], alt: '' }),
+    icon(lvl == null ? 'i-record' : LEVELS[lvl].icon, 'art a1'),
+    icon('i-record', 'art a2'),
+    icon('i-cross', 'art a3'),
+    h('span', { class: 'artcredit' }, credit(shot)),
+  );
+  setTempo(bpmFor(lvl == null ? 290 : LEVELS[lvl].ms));
   $('#pauseBtn').textContent = 'Pause';
   showScreen('play');
   $('#mline').classList.remove('show');
@@ -276,6 +289,7 @@ function updateHud(r: Round): void {
   if (d !== dread) {
     dread = d;
     $('#chartwrap').style.setProperty('--dread', String(d));
+    $('#chartwrap').classList.toggle('rage', d >= 0.5);
   }
   const pnl = $('#pnl');
   pnl.textContent = pct(ret, 2);

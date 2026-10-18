@@ -9,11 +9,23 @@
 <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-geobasket" viewBox="0 0 120 80"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 66 L8 56 Q9 52 18 50 L34 14 L58 10 L62 46 L92 52 Q108 56 110 64 L110 70 L8 70 Z"/><path d="M34 14 L40 4 L60 2 L58 10"/><path d="M8 62 L110 62"/><path d="M26 30 L50 26 M28 38 L52 34 M30 46 L54 42"/></g></symbol>
+    <symbol id="i-ramones" viewBox="0 0 120 80"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6 64 L6 54 Q8 48 20 46 L40 34 L58 40 L94 46 Q112 50 114 60 L114 68 L6 68 Z"/><path d="M6 60 L114 60"/><path d="M42 36 L48 44 M50 38 L56 46 M58 40 L64 48"/><path d="M20 46 L20 56"/></g></symbol>
+    <symbol id="i-kiss" viewBox="0 0 120 80"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M30 4 L62 4 L64 50 L96 56 Q112 60 114 68 L114 74 L22 74 L24 56 Z"/><path d="M24 62 L114 62"/><path d="M32 14 L60 14 M32 24 L60 24 M32 34 L60 34 M30 44 L62 44"/></g></symbol>
+    <symbol id="i-drk" viewBox="0 0 120 80"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M40 8 Q60 22 80 8 L112 22 L104 42 L90 36 L90 74 L30 74 L30 36 L16 42 L8 22 Z"/><path d="M46 12 Q60 36 74 12"/><path d="M44 58 L76 58 L76 74 M44 58 L44 74"/></g></symbol>
+    <symbol id="i-tecuatl" viewBox="0 0 120 80"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 28 Q4 24 12 24 L52 26 Q58 26 60 30 Q62 26 68 26 L108 24 Q116 24 116 28 L112 48 Q110 56 100 56 L74 56 Q66 56 64 48 L60 38 L56 48 Q54 56 46 56 L20 56 Q10 56 8 48 Z"/><path d="M4 28 L0 22 M116 28 L120 22"/></g></symbol>
+    <symbol id="i-record" viewBox="0 0 80 80"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="40" cy="40" r="36"/><circle cx="40" cy="40" r="26" stroke-dasharray="3 5"/><circle cx="40" cy="40" r="14"/><circle cx="40" cy="40" r="3" fill="currentColor"/><path d="M40 4 L40 14 M40 66 L40 76 M4 40 L14 40 M66 40 L76 40" stroke-linecap="round"/></g></symbol>
+    <symbol id="i-cross" viewBox="0 0 40 40"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 2 L20 38 M10 12 L30 12 M14 26 L26 26"/></g></symbol>
+  </defs>
+</svg>
 <div id="app">
   <section id="title" class="screen" aria-label="Title screen">
     <canvas id="bgTape" aria-hidden="true"></canvas>
     <div class="title-inner wide">
-      <h1 class="logo">Blind Tape</h1>
+      <div class="tickerbar" aria-hidden="true"><div class="ticker-track"><span>GEO <b class="up">+4.3%</b></span><span>RMN <b class="dn">-2.1%</b></span><span>KSS <b class="up">+11.8%</b></span><span>DRK <b class="dn">-9.4%</b></span><span>TCT <b class="up">+0.7%</b></span><span>CHAOS <b class="up">+43.0%</b></span><span>SIZE 43 <b class="dn">SOLD OUT</b></span><span>GEO <b class="up">+4.3%</b></span><span>RMN <b class="dn">-2.1%</b></span><span>KSS <b class="up">+11.8%</b></span><span>DRK <b class="dn">-9.4%</b></span><span>TCT <b class="up">+0.7%</b></span><span>CHAOS <b class="up">+43.0%</b></span><span>SIZE 43 <b class="dn">SOLD OUT</b></span></div></div>
+      <h1 class="logo" data-text="Blind Tape">Blind Tape</h1>
       <div class="cols">
         <aside class="rail left" aria-label="Index of the site">
           <section class="panel files"><h3>index of /</h3><ul id="fileList"></ul></section>
@@ -24,15 +36,61 @@
             <div class="row2"><span>received</span><b>4</b></div>
             <div class="row2"><span>answered</span><b>4</b></div>
           </section>
+          <section class="panel"><h3>gallery</h3>
+            <div id="gallery"></div>
+            <p class="cap">i did not take these. <a href="#/credits">credits</a>. i would have.</p>
+          </section>
+          <section class="panel"><h3>recently viewed</h3>
+            <svg class="shoe" viewBox="0 0 120 80" role="img" aria-label="A shoe, drawn from memory">
+              <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M8 66 L8 56 Q9 52 18 50 L34 14 L58 10 L62 46 L92 52 Q108 56 110 64 L110 70 L8 70 Z"/>
+                <path d="M34 14 L40 4 L60 2 L58 10"/>
+                <path d="M8 62 L110 62"/>
+                <path d="M26 30 L50 26 M28 38 L52 34 M30 46 L54 42"/>
+              </g>
+            </svg>
+            <p class="cap">geobasket, size 43. drawn from memory. it is bigger.</p>
+          </section>
+          <section class="panel plays"><h3>now playing</h3>
+            <div class="np"><svg class="icon disc" aria-hidden="true"><use href="#i-record"/></svg><div>a great chaos <span>paused at 0:00</span></div></div>
+            <button class="btn musicToggle" type="button" aria-pressed="false" data-on="Stop the loop" data-off="Play the loop">Play the loop</button>
+            <p class="cap">the real one is not on this server. this is what i hummed. do not tell anyone it is not the record.</p>
+          </section>
+          <section class="panel plays"><h3>most played</h3>
+            <ol>
+              <li>a great chaos <b>4,112</b></li>
+              <li>more chaos <b>2,906</b></li>
+              <li>no stylist <b>1,744</b></li>
+              <li>teen x <b>1,320</b></li>
+              <li>if looks could kill <b>988</b></li>
+              <li>project x <b>861</b></li>
+              <li>x <b>640</b></li>
+            </ol>
+            <p class="cap">the first two are not out yet. the counter is correct.</p>
+          </section>
+          <section class="panel"><h3>record shelf</h3>
+            <div class="covers">
+              <a href="#/project-x" class="cover c1" title="project x"><i></i><span>project x</span></a>
+              <a href="#/x" class="cover c2" title="x"><i></i><span>x</span></a>
+              <a href="#/teen-x" class="cover c3" title="teen x"><i></i><span>teen x</span></a>
+              <a href="#/a-great-chaos" class="cover c4" title="a great chaos"><i></i><span>a great chaos</span></a>
+              <a href="#/more-chaos" class="cover c5" title="more chaos"><i></i><span>more chaos</span></a>
+              <a href="#/if-looks-could-kill" class="cover c6" title="if looks could kill"><i></i><span>if looks could kill</span></a>
+              <a href="#/no-stylist" class="cover c7" title="no stylist"><i></i><span>no stylist</span></a>
+            </div>
+            <p class="cap">covers drawn from memory. they are not the covers.</p>
+          </section>
+          <section class="panel"><h3>tags</h3>
+            <p class="tags">black &middot; loud &middot; size 43 &middot; hem &middot; chaos &middot; no stylist &middot; opium (label) &middot; drape &middot; sunglasses &middot; the hall &middot; sold out &middot; 03:17</p>
+          </section>
         </aside>
         <div class="center">
       <section class="about" aria-label="About this game">
         <div class="kicker">About this game</div>
-        <p>Blind Tape is a trading game I built so I could practise without losing money. The market runs on its own clock, one trading day at a time, and you never see the next bar. You go long, short or flat. You choose how big the position is, and whether a stop-loss or a profit target closes it for you. Every trade costs 0.10%, the same as the bots pay.</p>
-        <p>Six bots trade the same tape as you: buy and hold, a moving-average cross, momentum, a breakout, and two mean-reversion rules. After each round you can open the backtest lab, change their settings, sweep the parameters, and check them on 100 markets they have never seen. Please do that part. It is the reason I wrote this.</p>
-        <p>There is a seventh racer, M. It is the bot I used while I was building the game. I never turned it off. It has been improving. I have not touched the code.</p>
-        <p>Earn stars by finishing in profit, by beating buy and hold, and by finishing first. One star opens the next market. The daily tape is the same for everyone and changes at 00:00 UTC. Your first run counts.</p>
-        <p>I would like to meet everyone who plays this. If you play it, write to me: <a href="mailto:mhale@blindtape.example">mhale@blindtape.example</a>. Any hour is fine. I answer every email.</p>
+        <p>Blind Tape is a trading game I built so I could practise without losing money. You never see the next bar. Go long, short or flat. Every trade costs 0.10%, the same as the bots pay.</p>
+        <p>Six bots trade the tape with you. A seventh, M., I never turned off. One star opens the next market, and every market is named for something I own: the geobasket, the ramones, the kiss boots, the hoodie, the tecuatl.</p>
+        <p>This is an opium game. The label does not exist yet. Play it at night, in black, with the opium records on and the volume low. Do not turn it up. Do not ask who is signed.</p>
+        <p>I would like to meet everyone who plays this: <a href="mailto:mhale@blindtape.example">mhale@blindtape.example</a>. Any hour is fine. I answer every email. Please do not email me about the shoes.</p>
         <p class="sig">&mdash; M. Hale, August 2010</p>
         <p class="edit">edited 14 March 2011: I used to answer every email the same day. I got four. Write anyway.</p>
       </section>
@@ -89,6 +147,12 @@
           <li>THE BOTS ARE NOT YOUR FRIENDS. ONE OF THEM IS <mark>WATCHING</mark>.</li>
           <li>IF THE COUNTER SAYS 1, THAT IS YOU. IF IT SAYS 2, CLOSE THE TAB.</li>
           <li>NO SCREENSHOTS. NO QUESTIONS.</li>
+          <li>DO NOT ASK ABOUT THE SHOES.</li>
+          <li>WEAR BLACK. THE TAPE CAN TELL.</li>
+          <li>THE RECORD STAYS ON. DO NOT TURN IT DOWN.</li>
+          <li>NO STYLIST. THE TAPE DOES NOT NEED ONE.</li>
+          <li>THE HEM STAYS LONG. I HAVE MEASURED.</li>
+          <li>THE FAMILY STAYS IN THE HALL.</li>
         </ol>
       </section>
       <section class="ruledout" aria-label="Things I have ruled out">
@@ -100,6 +164,11 @@
           <li><s>the seed</s> <small>(it is the seed)</small></li>
           <li><s>the bots</s> <small>except one</small></li>
           <li><s>the neighbours</s></li>
+          <li><s>the label</s> <small>(it is a label)</small></li>
+          <li><s>a stylist</s> <small>(none)</small></li>
+          <li><s>the record</s> <small>(it is on)</small></li>
+          <li><s>the shoes</s> <small>(they are on the floor)</small></li>
+          <li><s>lonely</s> <small>(i am working on it)</small></li>
           <li>you <small>(not yet)</small></li>
         </ul>
       </section>
@@ -112,6 +181,7 @@
         <aside class="rail right" aria-label="Changelog and notes to self">
           <section class="panel"><h3>changelog</h3>
             <ul class="changelog">
+              <li><b>v2.5.1</b> unreleased<br>carson mode: the daily tape with the lights off and the volume up. not releasing</li>
               <li><b>v2.5</b> unreleased<br>archive page. not releasing until the seed log is explained</li>
               <li><b>v2.4</b> 21 feb 2011<br>news wire</li>
               <li><b>v2.3</b> 11 nov 2010<br>backtester fixed</li>
@@ -128,6 +198,8 @@
               <li>a crash is never 11 bars</li>
               <li>the page reloads when nobody is here</li>
               <li>the counter is correct</li>
+              <li>the geobaskets are not a bug</li>
+              <li>a great chaos has not come out yet. i have it</li>
             </ul>
           </section>
           <section class="panel"><h3>todo</h3>
@@ -135,9 +207,63 @@
               <li class="done">volume bars</li>
               <li class="done">stop-loss</li>
               <li class="done">profit target</li>
+              <li class="done">listen to a great chaos (not out yet)</li>
               <li>check the 151st bar again</li>
               <li>fix rounding on the 0.10% fee</li>
+              <li>return the geobaskets (not returnable)</li>
+              <li>find a stylist</li>
               <li>sleep</li>
+            </ul>
+          </section>
+          <section class="panel cart"><h3>cart</h3>
+            <ul>
+              <li>geobasket, 43 <span>sold out</span></li>
+              <li>ramones low, 43 <span>sold out</span></li>
+              <li>kiss boots <span>sold out</span></li>
+              <li>drkshdw hoodie <span>sold out</span></li>
+              <li>hosting through 2040 <span>paid</span></li>
+            </ul>
+            <div class="cap">total: more than the server</div>
+          </section>
+          <section class="panel lookbook"><h3>lookbook</h3>
+            <div class="look">
+              <a href="#/geobasket"><svg class="icon" aria-hidden="true"><use href="#i-geobasket"/></svg><span>geobasket</span></a>
+              <a href="#/ramones"><svg class="icon" aria-hidden="true"><use href="#i-ramones"/></svg><span>ramones low</span></a>
+              <a href="#/kiss-boots"><svg class="icon" aria-hidden="true"><use href="#i-kiss"/></svg><span>kiss boots</span></a>
+              <a href="#/drkshdw"><svg class="icon" aria-hidden="true"><use href="#i-drk"/></svg><span>drkshdw</span></a>
+              <a href="#/tecuatl"><svg class="icon" aria-hidden="true"><use href="#i-tecuatl"/></svg><span>tecuatl</span></a>
+              <a href="#/a-great-chaos"><svg class="icon" aria-hidden="true"><use href="#i-cross"/></svg><span>the hall</span></a>
+            </div>
+            <p class="cap">all drawn from memory. all bigger.</p>
+          </section>
+          <section class="panel"><h3>size chart</h3>
+            <ul class="sizes"><li><span>me</span><b>43</b></li><li><span>the geobaskets</span><b>43</b></li><li><span>the ramones</span><b>43</b></li><li><span>the kiss boots</span><b>43 (they are taller)</b></li><li><span>the tape</span><b>43</b></li></ul>
+            <p class="cap">nothing else comes in my size.</p>
+          </section>
+          <section class="panel"><h3>dress code</h3>
+            <ul class="plain"><li>black</li><li>the hem long</li><li>sunglasses on (tecuatl)</li><li>no stylist</li><li>no photographs</li></ul>
+          </section>
+          <section class="panel"><h3>wishlist</h3>
+            <ul class="plain"><li class="done">geobasket</li><li class="done">ramones low</li><li class="done">kiss boots</li><li class="done">drkshdw hoodie</li><li class="done">a great chaos</li><li class="done">more chaos</li><li>a friend (not in 43)</li></ul>
+          </section>
+          <section class="panel links"><h3>links</h3>
+            <ul>
+              <li><a href="#/ken-carson">ken carson</a> <span>(not on this server)</span></li>
+              <li><a href="#/destroy-lonely">destroy lonely</a> <span>(instruction)</span></li>
+              <li><a href="#/rick-owens">rick owens</a> <span>(drape)</span></li>
+              <li><a href="#/opium">opium</a> <span>(label)</span></li>
+              <li><a href="#/a-great-chaos">a great chaos</a></li>
+              <li><a href="#/more-chaos">more chaos</a></li>
+              <li><a href="#/project-x">project x</a> &middot; <a href="#/x">x</a> &middot; <a href="#/teen-x">teen x</a></li>
+              <li><a href="#/no-stylist">no stylist</a></li>
+              <li><a href="#/if-looks-could-kill">if looks could kill</a></li>
+              <li><a href="#/ramones">ramones low</a> &middot; <a href="#/kiss-boots">kiss boots</a></li>
+              <li><a href="#/drkshdw">drkshdw</a> &middot; <a href="#/tecuatl">tecuatl</a> &middot; <a href="#/dunks">dunks</a></li>
+              <li><a href="#/lookbook">lookbook</a> &middot; <a href="#/runway">runway</a></li>
+              <li><a href="#/tickets">tickets</a> &middot; <a href="#/tour">tour</a> &middot; <a href="#/merch">merch</a></li>
+              <li><a href="#/cart">cart</a> &middot; <a href="#/wishlist">wishlist</a> &middot; <a href="#/restock">restock</a></li>
+              <li><a href="#/dress-code">dress code</a> &middot; <a href="#/size-chart">size chart</a></li>
+              <li><a href="#/stylist">stylist</a> &middot; <a href="#/backstage">backstage</a> &middot; <a href="#/listening">listening</a></li>
             </ul>
           </section>
           <section class="panel"><h3>seeds, last 24</h3><pre id="rawSeeds"></pre></section>
@@ -153,12 +279,14 @@
       <div class="hud-title"><b id="lvlName">MARKET 1</b><span id="lvlSub"></span></div>
       <div class="hud-prog" aria-hidden="true"><i id="prog"></i></div>
       <span class="mono small" id="dayCount">Day 0</span>
+      <button class="btn musicToggle" type="button" aria-pressed="false" data-on="Beat off" data-off="Beat">Beat</button>
       <button class="btn" id="muteBtn" type="button" aria-pressed="false">Sound on</button>
       <button class="btn" id="pauseBtn" type="button">Pause</button>
     </header>
     <div class="arena">
       <div class="chartwrap" id="chartwrap">
         <canvas id="live" aria-label="Live price chart"></canvas>
+        <div class="chartart" id="chartArt" aria-hidden="true"></div>
         <div class="pnl"><div class="pnl-v" id="pnl">+0.00%</div><div class="pnl-sub"><span class="chip" id="posChip">FLAT</span><span class="chip streak" id="streakChip" hidden></span><span class="chip" id="ruleChip" hidden></span></div></div>
         <div class="mline" id="mline" aria-live="polite"></div>
         <div class="wire" id="wire" aria-live="polite" aria-label="News wire"></div>
@@ -241,6 +369,7 @@
     <div class="notes-wrap">
       <div class="notes-top"><button class="btn" id="pageBack" type="button">&larr; Back</button></div>
       <h2 class="notes-title" id="pageTitle"></h2>
+      <div class="page-art" id="pageArt"></div>
       <pre class="filebody" id="pageBody"></pre>
       <div class="pagelinks" id="pageLinks"></div>
     </div>

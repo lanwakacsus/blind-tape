@@ -2,6 +2,7 @@
 
 import { playLevel } from '../game/actions';
 import { SIZES, STOPS, TARGETS, game, setFast, setPos, setSize, setStop, setTarget } from '../game/round';
+import { isPlaying, toggleMusic } from '../game/music';
 import { nextLevel, persist, save } from '../game/save';
 import type { Position } from '../engine/strategies';
 import { $, $$ } from './dom';
@@ -17,6 +18,17 @@ function toggleMute(): void {
   const btn = $('#muteBtn');
   btn.textContent = save.muted ? 'Sound off' : 'Sound on';
   btn.setAttribute('aria-pressed', String(save.muted));
+}
+
+let beatStopped = false;
+
+function toggleBeat(): void {
+  const on = toggleMusic();
+  beatStopped = !on;
+  for (const b of $$<HTMLButtonElement>('.musicToggle')) {
+    b.setAttribute('aria-pressed', String(on));
+    b.textContent = on ? (b.dataset.on ?? 'Stop') : (b.dataset.off ?? 'Beat');
+  }
 }
 
 function onKeyDown(e: KeyboardEvent): void {
@@ -96,6 +108,15 @@ export function initInput(): void {
 
   $('#pauseBtn').addEventListener('click', () => togglePause());
   $('#muteBtn').addEventListener('click', toggleMute);
+  for (const b of $$('.musicToggle')) b.addEventListener('click', toggleBeat);
+  // Browsers do not allow sound before the first click or key press, so the loop starts then.
+  const first = (e: Event) => {
+    window.removeEventListener('pointerdown', first);
+    window.removeEventListener('keydown', first);
+    if (!beatStopped && !isPlaying() && !(e.target as HTMLElement | null)?.closest?.('.musicToggle')) toggleBeat();
+  };
+  window.addEventListener('pointerdown', first);
+  window.addEventListener('keydown', first);
   $('#menuBtn').addEventListener('click', () => {
     if (game.round?.phase === 'run') togglePause(true);
     else quit();

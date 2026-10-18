@@ -13,6 +13,7 @@ describe('lore', () => {
     expect(verdict({ ret: 0.05, bhRet: 0.1, trades: 4 })).toMatch(/HOLDING/);
     expect(verdict({ ret: -0.05, bhRet: 0.1, trades: 20 })).toMatch(/20 TRADES/);
     expect(verdict({ ret: -0.05, bhRet: 0.1, trades: 3 })).toMatch(/DOES NOT CARE/);
+    expect(verdict({ ret: -0.15, bhRet: 0.1, trades: 3 })).toMatch(/GREAT CHAOS/);
   });
 
   it('words elapsed time plainly', () => {

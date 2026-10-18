@@ -529,3 +529,127 @@ td.leak{color:var(--red);font-style:italic}
 
 #reviewBody tr.phantom td{color:var(--muted);font-style:italic}
 
+
+/* things that did not upload, and a shoe */
+.photo{display:flex;align-items:center;gap:10px;height:54px;margin-bottom:6px;padding:0 10px;border:1px dashed var(--line);font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.photo::before{content:"";flex:none;width:14px;height:14px;border:1px solid var(--muted);background:linear-gradient(135deg,transparent 45%,var(--muted) 46% 54%,transparent 55%)}
+.cap{margin:6px 0 0;font-size:10.5px;line-height:1.5;color:var(--muted)}
+.shoe{display:block;width:100%;max-width:200px;height:auto;color:var(--ink)}
+.cart li{display:flex;justify-content:space-between;gap:10px}
+.cart li::before{content:none!important}
+.cart li span{color:var(--muted)}
+
+.plays ol{margin:0;padding:0;list-style:none}
+.plays li{display:flex;justify-content:space-between;gap:10px;font-size:11.5px}
+.plays li b{color:var(--muted);font-weight:400}
+.plays .np{font-size:12px}
+.plays .np span{display:block;color:var(--muted);font-size:10.5px}
+.tags{margin:0;font-size:11px;line-height:1.7;color:var(--muted)}
+.sizes{margin:0;padding:0;list-style:none;font-size:11px}
+.sizes li{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+.sizes b{color:var(--muted);font-weight:400}
+ul.plain{margin:0;padding:0;list-style:none;font-size:11.5px}
+ul.plain li.done{color:var(--muted);text-decoration:line-through}
+.links ul{margin:0;padding:0;list-style:none;font-size:11.5px;line-height:1.7}
+.links li span{color:var(--muted)}
+
+/* drawings */
+.icon{width:56px;height:38px;color:var(--ink);flex:none}
+.icon.big{width:min(320px,70%);height:auto;aspect-ratio:3/2;color:var(--accent)}
+.node-icon{width:44px;height:30px;color:var(--muted);margin-bottom:4px}
+.node:not(.locked) .node-icon{color:var(--ink)}
+.page-art{margin:0 0 14px}
+.page-art:empty{display:none}
+.plays .np{display:flex;align-items:center;gap:10px}
+.plays .np .icon{width:44px;height:44px;color:var(--muted)}
+.plays .btn{margin-top:8px;font-size:11px;padding:5px 10px}
+.look{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.look a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border:1px dashed var(--line);color:var(--ink);text-decoration:none;font-size:10px}
+.look .icon{width:100%;height:30px}
+.look a:hover{border-color:var(--gold);color:var(--gold)}
+.covers{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.cover{position:relative;display:block;aspect-ratio:1;overflow:hidden;border:1px solid var(--line);background:#0b0b0b;text-decoration:none}
+.cover i{position:absolute;inset:0}
+.cover span{position:absolute;left:3px;right:3px;bottom:2px;font-family:var(--f-mono);font-size:7.5px;line-height:1.1;color:var(--ink);text-transform:uppercase;letter-spacing:.04em}
+.cover:hover{border-color:var(--gold)}
+.c1 i{background:radial-gradient(circle at 50% 38%,#e6e6e6 0 14%,transparent 15%),#101010}
+.c2 i{background:linear-gradient(45deg,transparent 46%,#d6d6d6 47% 53%,transparent 54%),linear-gradient(-45deg,transparent 46%,#d6d6d6 47% 53%,transparent 54%),#101010}
+.c3 i{background:repeating-linear-gradient(0deg,#d6d6d6 0 1px,transparent 1px 6px),#161616}
+.c4 i{background:radial-gradient(circle at 50% 50%,transparent 0 22%,#e6e6e6 23% 26%,transparent 27% 40%,#8a8a8a 41% 43%,transparent 44%),#0a0a0a}
+.c5 i{background:radial-gradient(circle at 30% 60%,transparent 0 20%,#ffd400 21% 23%,transparent 24%),radial-gradient(circle at 70% 40%,transparent 0 24%,#e6e6e6 25% 27%,transparent 28%),#0a0a0a}
+.c6 i{background:linear-gradient(90deg,#0a0a0a 0 45%,#d6d6d6 45% 55%,#0a0a0a 55%)}
+.c7 i{background:conic-gradient(from 0deg at 50% 50%,#111 0 25%,#2a2a2a 0 50%,#111 0 75%,#2a2a2a 0)}
+
+/* the wire along the top of the front page */
+.tickerbar{overflow:hidden;white-space:nowrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px;font-family:var(--f-mono);font-size:11px;color:var(--muted);background:var(--bg2)}
+.ticker-track{display:inline-flex;gap:28px;padding:5px 0}
+.tickerbar .up{color:var(--up)} .tickerbar .dn{color:#fff}
+
+/* motion: only for people who have not asked for less */
+@media (prefers-reduced-motion:no-preference){
+  .ticker-track{animation:wire 38s linear infinite}
+  @keyframes wire{to{transform:translateX(-50%)}}
+
+  .logo{position:relative;animation:jitter 7s steps(1) infinite}
+  .logo::before,.logo::after{content:attr(data-text);position:absolute;left:0;top:0;pointer-events:none;opacity:0;mix-blend-mode:screen}
+  .logo::before{color:#ffd400;animation:splitA 7s steps(1) infinite}
+  .logo::after{color:#fff;animation:splitB 7s steps(1) infinite}
+  @keyframes jitter{0%,91%,100%{transform:none}92%{transform:translate(-3px,1px) skewX(-4deg)}94%{transform:translate(4px,-1px)}96%{transform:translate(-2px,0) skewX(3deg)}98%{transform:none}}
+  @keyframes splitA{0%,91%,100%{opacity:0;transform:none}92%{opacity:.9;transform:translate(6px,-2px)}95%{opacity:.7;transform:translate(-5px,2px)}98%{opacity:0}}
+  @keyframes splitB{0%,91%,100%{opacity:0;transform:none}93%{opacity:.8;transform:translate(-7px,1px)}96%{opacity:.6;transform:translate(5px,-1px)}98%{opacity:0}}
+
+  .disc{animation:spin 6s linear infinite;animation-play-state:paused}
+  .musicToggle[aria-pressed="true"]{box-shadow:0 0 0 1px var(--gold) inset;color:var(--gold)}
+  .plays:has(.musicToggle[aria-pressed="true"]) .disc{animation-play-state:running;color:var(--gold)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .node.next{animation:pulse 2.2s ease-in-out infinite}
+  .node:not(.locked) .node-icon{animation:float 3.4s ease-in-out infinite}
+  .node:not(.locked):hover .node-icon{animation:shake .25s linear infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 1px var(--gold) inset,0 0 18px color-mix(in oklab,var(--gold) 45%,transparent);border-color:var(--gold)}}
+  @keyframes float{50%{transform:translateY(-3px)}}
+  @keyframes shake{0%{transform:translate(0,0)}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,-1px)}}
+
+  .cover:hover i{animation:invert .18s steps(2) infinite}
+  @keyframes invert{50%{filter:invert(1)}}
+  .look a:hover .icon{animation:shake .25s linear infinite}
+
+  .rules li:nth-child(5),.rules li:nth-child(11){animation:flick 5s steps(1) infinite}
+  @keyframes flick{0%,86%,90%,100%{opacity:1}87%{opacity:.2}88%{opacity:1}89%{opacity:.4}}
+
+  /* film grain over the front page */
+  #title::after{content:"";position:fixed;inset:-50%;pointer-events:none;opacity:.045;background-image:repeating-radial-gradient(circle at 17% 32%,#fff 0 1px,transparent 1px 3px);animation:grain .6s steps(4) infinite;z-index:5}
+  @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-4%,3%)}50%{transform:translate(3%,-4%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(4%,2%)}}
+
+  /* the chart shakes when the position is deep underwater */
+  #chartwrap.rage{animation:rage .12s linear infinite}
+  @keyframes rage{0%{transform:translate(0,0)}25%{transform:translate(-1px,1px)}50%{transform:translate(1px,-1px)}75%{transform:translate(-1px,-1px)}100%{transform:translate(1px,1px)}}
+}
+.sizes li::before,.plays li::before,ul.plain li::before{content:none!important}
+.sizes li{display:flex!important;justify-content:space-between;gap:10px}
+.sizes li b{text-align:right}
+
+/* drawings laid over the chart, dark on the white graph so the candles still read */
+.chartart{position:absolute;inset:0;pointer-events:none;overflow:hidden;mix-blend-mode:multiply;z-index:1}
+.chartart .art{position:absolute;color:#000;opacity:.1}
+.chartart .a1{width:62%;height:auto;aspect-ratio:3/2;left:-4%;bottom:-6%}
+.chartart .a2{width:34%;height:auto;aspect-ratio:1;right:-5%;top:-8%;opacity:.09}
+.chartart .a3{width:12%;height:auto;aspect-ratio:1;right:14%;bottom:10%;opacity:.12}
+@media (prefers-reduced-motion:no-preference){
+  .chartart .a1{animation:drift 26s ease-in-out infinite alternate}
+  .chartart .a2{animation:spin 40s linear infinite}
+  .chartart .a3{animation:flick 6s steps(1) infinite}
+  @keyframes drift{to{transform:translate(8%,-6%) rotate(-3deg)}}
+}
+
+/* photographs: freely licensed, shown grey */
+.shot{margin:0 0 8px}
+.shot img{display:block;width:100%;height:96px;object-fit:cover;object-position:50% 25%;filter:grayscale(1) contrast(1.15) brightness(.85)}
+.shot figcaption{font-size:9.5px;line-height:1.35;color:var(--muted);margin-top:2px}
+.photo-img{display:block;max-width:min(360px,80%);max-height:46vh;filter:grayscale(1) contrast(1.15)}
+.chartart .shot{inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.4);opacity:.17;mix-blend-mode:multiply}
+.chartart .artcredit{position:absolute;right:6px;bottom:3px;font-family:var(--f-mono);font-size:8.5px;color:#000;opacity:.55}
+@media (prefers-reduced-motion:no-preference){
+  .chartart .shot{animation:shotdrift 30s ease-in-out infinite alternate}
+  @keyframes shotdrift{from{transform:scale(1.05) translate(0,0)}to{transform:scale(1.12) translate(-2%,2%)}}
+}

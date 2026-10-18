@@ -20,7 +20,7 @@ describe('diary', () => {
 
   it('reports exactly the entries a round brings back', () => {
     const found = newlyUnlocked(0, 3);
-    expect(found.map((e) => e.rounds)).toEqual([1, 2, 3]);
+    expect(found.map((e) => e.rounds)).toEqual([1, 2, 2, 3]);
     expect(newlyUnlocked(3, 3)).toEqual([]);
   });
 

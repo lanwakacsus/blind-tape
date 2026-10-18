@@ -239,3 +239,6 @@ export const sfx = {
     haze(a, 164.8, 2.2, 0.035, 0.02, 0.1);
   }),
 };
+
+/** The same voices, for the looping beat in music.ts. */
+export const synth = { context, tick, sub, bell, haze, noise };

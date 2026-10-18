@@ -44,7 +44,29 @@ describe('resolveRoute', () => {
     expect(body('/room')).toMatch(/did not finish it/);
     expect(body('/him')).toMatch(/no such user/);
     expect(body('/tomorrow')).toMatch(/midnight, utc/);
-    expect(new Set(['/room', '/bar151', '/him', '/tomorrow'].map(body)).size).toBe(4);
+    expect(body('/geobasket')).toMatch(/a page about a shoe/);
+    expect(body('/ken-carson')).toMatch(/he is very loud/);
+    expect(body('/destroy-lonely')).toMatch(/it is an instruction/);
+    expect(body('/rick-owens')).toMatch(/it has no front/);
+    const pages = ['/room', '/bar151', '/him', '/tomorrow', '/geobasket', '/ken-carson', '/destroy-lonely', '/rick-owens'];
+    expect(new Set(pages.map(body)).size).toBe(pages.length);
+  });
+
+  it('has a page for every record, shoe and name he fixated on, all different and all disallowed', () => {
+    const paths = ['/a-great-chaos', '/more-chaos', '/project-x', '/x', '/teen-x', '/no-stylist', '/if-looks-could-kill', '/opium', '/ramones', '/kiss-boots', '/drkshdw', '/tecuatl', '/dunks', '/lookbook', '/runway', '/stylist', '/cart', '/wishlist', '/merch', '/tickets', '/tour', '/size-chart', '/dress-code', '/sold-out', '/restock', '/backstage', '/listening'];
+    const body = (p: string) => (resolveRoute(p) as any).body as string;
+    const bodies = paths.map(body);
+    expect(new Set(bodies).size).toBe(paths.length);
+    expect(bodies.every((b) => !/this page has not been written yet/.test(b))).toBe(true);
+    const robots = body('/robots.txt');
+    for (const p of paths) expect(robots).toContain(`Disallow: ${p}`);
+  });
+
+  it('serves a playlist of album titles, and no lyrics', () => {
+    const r = resolveRoute('/', '#/playlist.m3u') as any;
+    expect(r).toMatchObject({ kind: 'page', title: 'playlist.m3u' });
+    for (const title of ['a great chaos', 'more chaos', 'no stylist']) expect(r.body).toContain(title);
+    expect(r.body.split('\n').length).toBeLessThan(20);
   });
 
   it('echoes any other path and invites an email', () => {

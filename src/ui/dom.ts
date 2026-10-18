@@ -61,3 +61,15 @@ export function classes(...names: (string | false | null | undefined)[]): string
 
 /** <kbd> shortcut. */
 export const kbd = (key: string) => h('kbd', null, key);
+
+/** An SVG that points at one of the symbols defined once in index.html. */
+export function icon(id: string, cls = 'icon'): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', cls);
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS(ns, 'use');
+  use.setAttribute('href', '#' + id);
+  svg.appendChild(use);
+  return svg;
+}

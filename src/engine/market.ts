@@ -58,6 +58,9 @@ export interface Rule {
 export interface Level extends MarketOptions {
   rule?: Rule;
   sub: string;
+  /** What the market is about: a ticker and an icon id (see the symbols in index.html). */
+  ticker: string;
+  icon: string;
   /** One-line read of the session shown before the bell. */
   brief: string;
   /** Share of the news wire that is noise (0–1). Does not affect the price path. */
@@ -90,15 +93,15 @@ export const REGIMES: Record<RegimeKey, Regime> = {
 };
 
 export const LEVELS: Level[] = [
-  { sub: 'Easy', brief: 'Quiet desks. The wire is mostly honest: when it moves, the tape usually follows.', noise: 0.1, ms: 400, volMul: 0.85, crashW: 0.15, chopW: 2 },
-  { sub: 'Normal', brief: 'Momentum desks are in charge. Headlines tend to land just ahead of the trend.', noise: 0.2, ms: 330, volMul: 1, crashW: 0.4, chopW: 2.5 },
-  { sub: 'Choppy', brief: 'Range-bound and jumpy. The wire is noisy; chasing every headline gets expensive.', noise: 0.35, rule: { maxTrades: 12, text: 'No more than 12 trades. Every one costs 0.10%.' }, ms: 280, volMul: 1.1, crashW: 0.5, chopW: 6 },
-  { sub: 'Crash Test', brief: 'Liquidity is thin. A scare headline buys you a few bars at best.', noise: 0.3, rule: { stop: 0.05, text: 'A 5% stop is locked on. You cannot turn it off.' }, ms: 240, volMul: 1.2, crashW: 1.4, chopW: 3 },
-  { sub: 'Hard', brief: 'Everything is moving and half the wire is rumor. Trust the tape over the headline.', noise: 0.5, rule: { maxSize: 0.5, maxTrades: 16, text: 'Half size at most, and no more than 16 trades.' }, ms: 200, volMul: 1.35, crashW: 1, chopW: 3 },
+  { sub: 'Easy', ticker: 'GEO', icon: 'i-geobasket', brief: 'GEO, the geobasket resale index. Quiet desks, size 43 only. The wire is mostly honest: when it moves, the tape usually follows.', noise: 0.1, ms: 400, volMul: 0.85, crashW: 0.15, chopW: 2 },
+  { sub: 'Normal', ticker: 'RMN', icon: 'i-ramones', brief: 'RMN, ramones low. Momentum desks are in charge and the lows keep selling out. Headlines tend to land just ahead of the trend.', noise: 0.2, ms: 330, volMul: 1, crashW: 0.4, chopW: 2.5 },
+  { sub: 'Choppy', ticker: 'KSS', icon: 'i-kiss', brief: 'KSS, kiss boots. Taller than the monitor and just as jumpy. The wire is noisy; chasing every headline gets expensive.', noise: 0.35, rule: { maxTrades: 12, text: 'No more than 12 trades. Every one costs 0.10%.' }, ms: 280, volMul: 1.1, crashW: 0.5, chopW: 6 },
+  { sub: 'Crash Test', ticker: 'DRK', icon: 'i-drk', brief: 'DRK, the drkshdw hoodie. Liquidity is thin and everything is black. A scare headline buys you a few bars at best.', noise: 0.3, rule: { stop: 0.05, text: 'A 5% stop is locked on. You cannot turn it off.' }, ms: 240, volMul: 1.2, crashW: 1.4, chopW: 3 },
+  { sub: 'Hard', ticker: 'TCT', icon: 'i-tecuatl', brief: 'TCT, tecuatl. Everything is moving and half the wire is rumor. Wear them and trust the tape over the headline.', noise: 0.5, rule: { maxSize: 0.5, maxTrades: 16, text: 'Half size at most, and no more than 16 trades.' }, ms: 200, volMul: 1.35, crashW: 1, chopW: 3 },
 ];
 
 /** Settings for the daily challenge. Changing these changes everyone's daily tape. */
-export const DAILY: Level = { sub: 'Daily tape', brief: 'Same wire for everyone today. Some of it is signal.', noise: 0.3, ms: 290, volMul: 1.1, crashW: 0.7, chopW: 3 };
+export const DAILY: Level = { sub: 'Daily tape', ticker: 'CHAOS', icon: 'i-record', brief: 'CHAOS, the record that is not out yet. Same wire for everyone today. Some of it is signal.', noise: 0.3, ms: 290, volMul: 1.1, crashW: 0.7, chopW: 3 };
 
 /** Small fast seeded PRNG returning floats in [0, 1). */
 export function mulberry32(seed: number): () => number {

@@ -14,7 +14,9 @@ export const ARCHIVE_TO = '2011-03-14';
 const MARKS: Record<string, string> = {
   '2010-08-03': 'first day live. nobody played it. that is fine.',
   '2010-12-02': 'i thought this one repeated. it does not.',
+  '2011-02-26': 'ordered the geobaskets. the tape did not care.',
   '2011-03-05': 'she called. i did not answer.',
+  '2011-03-07': 'they arrived. the tape still did not care.',
   '2011-03-14': 'it is in this one.',
 };
 

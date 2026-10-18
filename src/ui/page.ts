@@ -1,7 +1,9 @@
 /* Files and pages that are not part of the game: robots.txt, the sitemap, and the 404s. */
 
 import { resolveRoute } from '../game/routes';
-import { $, fill, h } from './dom';
+import { credit, photo } from '../game/credits';
+import { $, fill, h, icon } from './dom';
+import { SRC } from './photos';
 import { currentScreen, showScreen } from './screens';
 
 /** Shows whatever the address bar asks for. */
@@ -17,6 +19,14 @@ export function applyRoute(): void {
   }
   fill($('#pageTitle'), route.title);
   $('#pageBody').textContent = route.body;
+  fill(
+    $('#pageArt'),
+    ...(route.photo
+      ? [h('img', { class: 'photo-img', src: SRC[route.photo], alt: photo(route.photo).label }), h('div', { class: 'cap' }, credit(photo(route.photo)))]
+      : route.art
+      ? [icon(route.art, 'icon big')]
+      : []),
+  );
   fill($('#pageLinks'), ...route.links.map((l) => h('a', { href: '#' + l }, l)));
   showScreen('page');
 }

@@ -10,7 +10,9 @@ import { startRound } from '../game/round';
 import { isUnlocked, newSeason, nextLevel, progress, save, totalStars } from '../game/save';
 import { startTitleBackground } from '../render/titleBackground';
 import { renderDaily } from './daily';
-import { $, classes, fill, h } from './dom';
+import { photo } from '../game/credits';
+import { $, classes, fill, h, icon } from './dom';
+import { SRC } from './photos';
 import { currentScreen, onEnter, showScreen, type ScreenId } from './screens';
 import { QUOTES } from '../game/quotes';
 
@@ -22,12 +24,20 @@ export function renderTitle(): void {
     h('figcaption', null, `\u2014 ${QUOTE_OF_THE_DAY.source} (last changed ${UPDATED_LABEL}. i can't change it. i've tried.)`),
     h('button', { class: 'btn', type: 'button', onclick: () => showScreen('quotes') }, 'Quotes I like'),
   );
+  fill(
+    $('#gallery'),
+    ...(['ken', 'lonely', 'rick'] as const).map((id) =>
+      h('figure', { class: 'shot' }, h('img', { src: SRC[id], alt: photo(id).label, loading: 'lazy' }), h('figcaption', null, `${photo(id).label} \u00b7 ${photo(id).author}, ${photo(id).license}`)),
+    ),
+  );
   const days = Math.floor((Date.now() - UPDATED_AT) / 86400000);
   fill(
     $('#sitefoot'),
     h('div', null, `This page was last updated ${UPDATED_LABEL} (${days.toLocaleString('en-US')} days ago).`),
     h('div', null, '\u00a9 2009\u20132011 M. Hale. DO NOT COPY. I WILL KNOW.'),
     h('div', null, 'Total visitors since 2009: 312.'),
+    h('div', null, 'Best viewed in black. Optimised for size 43.'),
+    h('div', null, 'Photographs are not mine: ', h('a', { href: '#/credits' }, 'credits'), '.'),
     h('div', null, 'If everything goes to plan, I will update this game every year'),
 
   );
@@ -59,6 +69,11 @@ export function renderTitle(): void {
     { name: 'archive/', open: 'archive', when: '14-Mar-2011 03:17', size: '-' },
     { name: 'robots.txt', open: null, route: '/robots.txt', when: '14-Mar-2011 03:17', size: '112B' },
     { name: 'sitemap.xml', open: null, route: '/sitemap.xml', when: '13-Mar-2011 22:40', size: '612B' },
+    { name: 'playlist.m3u', open: null, route: '/playlist.m3u', when: '09-Mar-2011 23:58', size: '96B' },
+    { name: 'geobasket.jpg', open: null, route: '/geobasket', when: '07-Mar-2011 03:44', size: '0B' },
+    { name: 'a_great_chaos.mp3', open: null, route: '/a-great-chaos', when: '19-Jan-2011 05:20', size: '0B' },
+    { name: 'lookbook/', open: null, route: '/lookbook', when: '08-Mar-2011 03:03', size: '-' },
+    { name: 'sizes.txt', open: null, route: '/size-chart', when: '09-Mar-2011 03:21', size: '43B' },
     { name: 'm.bot', open: null, when: '14-Mar-2011 03:17', size: 'running' },
     { name: 'journal.db', open: 'journal', when: '(yours)', size: kb(JSON.stringify(save.journal).length) },
   ];
@@ -102,11 +117,12 @@ export function renderTitle(): void {
           'data-i': i,
           type: 'button',
           disabled: !open,
-          'aria-label': `Market ${i + 1}, ${L.sub}` + (open ? `, ${stars} of 3 stars` : ', locked'),
+          'aria-label': `Market ${i + 1}, ${L.ticker}, ${L.sub}` + (open ? `, ${stars} of 3 stars` : ', locked'),
           onclick: () => playLevel(i),
         },
+        icon(L.icon, 'icon node-icon'),
         h('b', null, i + 1),
-        h('span', null, L.sub),
+        h('span', null, `${L.ticker} \u00b7 ${L.sub}`),
         h('em', null, open ? starRow(stars) : 'Locked'),
       );
     }),

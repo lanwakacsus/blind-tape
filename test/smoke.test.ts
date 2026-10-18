@@ -87,13 +87,13 @@ describe('the front page is dense, and its file index works', () => {
 
   it('has a file index, a status panel, a changelog, known issues, a todo list and a raw seed dump', () => {
     mod.showScreen('title');
-    expect($('#fileList').children).toHaveLength(9);
+    expect($('#fileList').children).toHaveLength(14);
     expect($('#statusBox').children).toHaveLength(7);
     expect($('#statusBox').textContent).toMatch(/last login.*14 Mar 2011 03:17/);
     expect($('#rawSeeds').textContent!.split('\n')).toHaveLength(24);
     expect($('#rawSeeds').textContent).toMatch(/^2011-02-19 [0-9a-f]{8} (---|d\d{3})/);
-    expect(document.querySelectorAll('.changelog li')).toHaveLength(7);
-    expect(document.querySelectorAll('.rail .todo li.done').length).toBe(3);
+    expect(document.querySelectorAll('.changelog li')).toHaveLength(8);
+    expect(document.querySelectorAll('.rail .todo li.done').length).toBe(4);
   });
 
   it('opens a screen from the file index', () => {
@@ -120,7 +120,7 @@ describe('pages that were never written', () => {
     expect($('#page').hidden).toBe(false);
     expect($('#pageTitle').textContent).toBe('robots.txt');
     expect($('#pageBody').textContent).toMatch(/Disallow: \/bar151/);
-    expect(document.querySelectorAll('#pageLinks a')).toHaveLength(4);
+    expect(document.querySelectorAll('#pageLinks a')).toHaveLength(8);
   });
 
   it('answers an unwritten page in his voice, and any other path with a plain 404', () => {
@@ -150,6 +150,26 @@ describe('pages that were never written', () => {
   });
 });
 
+describe('the jokes are in, and every photo is credited', () => {
+  it('has a cart, a gallery of credited photos, and a shoe drawn from memory', () => {
+    mod.showScreen('title');
+    expect(document.querySelectorAll('.cart li')).toHaveLength(5);
+    expect(document.querySelectorAll('#gallery figure')).toHaveLength(3);
+    for (const f of document.querySelectorAll('#gallery figcaption')) expect(f.textContent).toMatch(/CC /);
+    expect(document.querySelectorAll('.links a').length).toBeGreaterThan(20);
+    expect(document.querySelectorAll('.plays li').length).toBe(7);
+    expect($('.sizes').textContent).toMatch(/43/);
+    for (const id of ['i-geobasket', 'i-ramones', 'i-kiss', 'i-drk', 'i-tecuatl', 'i-record']) expect(document.getElementById(id)).not.toBeNull();
+    expect(document.querySelectorAll('.covers .cover')).toHaveLength(7);
+    expect(document.querySelectorAll('.look a')).toHaveLength(6);
+    expect(document.querySelectorAll('#season .node-icon')).toHaveLength(5);
+    expect($('#season').textContent).toMatch(/GEO.*RMN.*KSS.*DRK.*TCT/);
+    expect(document.querySelectorAll('.musicToggle')).toHaveLength(2);
+    expect($('svg.shoe').getAttribute('aria-label')).toMatch(/drawn from memory/);
+    expect($('.rules').textContent).toMatch(/DO NOT ASK ABOUT THE SHOES/);
+  });
+});
+
 describe('every screen renders from the real page', () => {
   it('the title page has the author, his log, the seed log and the greeting', () => {
     mod.showScreen('title');
@@ -165,7 +185,7 @@ describe('every screen renders from the real page', () => {
     mod.showScreen('notes');
     expect($('#notesEntries').children.length).toBeGreaterThan(0);
     mod.showScreen('quotes');
-    expect($('#quoteList').children).toHaveLength(24);
+    expect($('#quoteList').children).toHaveLength(39);
     mod.showScreen('claims');
     expect($('#claimsList').children).toHaveLength(9);
     mod.showScreen('journal');
@@ -186,6 +206,8 @@ describe('every screen renders from the real page', () => {
 describe('getting set before a round', () => {
   it('waits for Start, and Start begins the countdown', () => {
     mod.startRound(mod.genMarket(5), 0, 'season');
+    expect(document.querySelectorAll('#chartArt svg')).toHaveLength(3);
+    expect($('#lvlSub').textContent).toMatch(/^GEO/);
     const r = mod.game.round;
     expect(r.phase).toBe('ready');
     expect($('#overlay').classList.contains('ready')).toBe(true);

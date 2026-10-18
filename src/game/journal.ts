@@ -113,7 +113,7 @@ export function habits(entries: readonly JournalEntry[]): string[] {
 
   const [bestM, worstM] = [lt.byMarket[0], lt.byMarket[lt.byMarket.length - 1]];
   if (lt.byMarket.length >= 2 && bestM.n >= 2 && worstM.n >= 2 && bestM.avgRet - worstM.avgRet > 0.05) {
-    out.push(`You do best on ${bestM.market} (${pct(bestM.avgRet)} on average) and worst on ${worstM.market} (${pct(worstM.avgRet)}). I could never get through ${worstM.market}.`);
+    out.push(`You do best on ${bestM.market} (${pct(bestM.avgRet)} on average) and worst on ${worstM.market} (${pct(worstM.avgRet)}). I could never get through ${worstM.market}. I could not get through the geobasket laces either.`);
   }
 
   return out.slice(0, 4).length ? out.slice(0, 4) : ['Nothing stands out. Your rounds look like each other. Mine did not.'];
