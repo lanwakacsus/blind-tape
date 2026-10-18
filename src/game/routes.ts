@@ -2,7 +2,7 @@
  * the files in the index, the pages in the sitemap, and the pages that were never written.
  * Pure: no DOM. */
 
-import { creditsPage } from './credits';
+import { creditsPage, type Photo } from './credits';
 
 export const MAIL = 'mhale@blindtape.example';
 
@@ -11,7 +11,7 @@ export type ScreenRoute = 'notes' | 'quotes' | 'claims' | 'journal' | 'archive';
 export type Route =
   | { kind: 'title' }
   | { kind: 'screen'; id: ScreenRoute }
-  | { kind: 'page'; title: string; body: string; links: string[]; art?: string; photo?: 'geobasket' | 'dunk' | 'rick' | 'ken' | 'lonely' };
+  | { kind: 'page'; title: string; body: string; links: string[]; art?: string; photo?: Photo['id'] };
 
 const SCREENS: Record<string, ScreenRoute> = {
   '/notes': 'notes',
@@ -97,7 +97,7 @@ const ART: Record<string, string> = {
 };
 
 /** Pages that show a photograph (see game/credits.ts). */
-const PHOTO: Record<string, 'geobasket' | 'dunk' | 'rick' | 'ken' | 'lonely'> = {
+const PHOTO: Record<string, Photo['id']> = {
   '/geobasket': 'geobasket',
   '/dunks': 'dunk',
   '/rick-owens': 'rick',

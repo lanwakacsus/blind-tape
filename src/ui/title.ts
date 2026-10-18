@@ -1,6 +1,7 @@
 /* Title screen: season map, play and CSV buttons, new-season reset, daily card. */
 
 import { LEVELS, parseCSV } from '../engine/market';
+import { reduceMotion } from '../env';
 import { starRow } from '../format';
 import { playLevel } from '../game/actions';
 import { body, stamp, unlocked } from '../game/diary';
@@ -10,7 +11,7 @@ import { startRound } from '../game/round';
 import { isUnlocked, newSeason, nextLevel, progress, save, totalStars } from '../game/save';
 import { startTitleBackground } from '../render/titleBackground';
 import { renderDaily } from './daily';
-import { photo } from '../game/credits';
+import { REEL, credit, photo } from '../game/credits';
 import { $, classes, fill, h, icon } from './dom';
 import { SRC } from './photos';
 import { currentScreen, onEnter, showScreen, type ScreenId } from './screens';
@@ -30,6 +31,7 @@ export function renderTitle(): void {
       h('figure', { class: 'shot' }, h('img', { src: SRC[id], alt: photo(id).label, loading: 'lazy' }), h('figcaption', null, `${photo(id).label} \u00b7 ${photo(id).author}, ${photo(id).license}`)),
     ),
   );
+  startReel();
   const days = Math.floor((Date.now() - UPDATED_AT) / 86400000);
   fill(
     $('#sitefoot'),
@@ -221,4 +223,24 @@ export function initTitle(): void {
   seasonBtn.addEventListener('click', () => armNewSeason(seasonBtn));
   const csvIn = $<HTMLInputElement>('#csvIn');
   csvIn.addEventListener('change', () => loadCsv(csvIn));
+}
+
+let reelTimer: ReturnType<typeof setInterval> | undefined;
+
+/** The photographs at the top of the front page: one at a time, slowly, with a strip of all of them below. */
+function startReel(): void {
+  clearInterval(reelTimer);
+  let i = 0;
+  const stage = $('#reelStage');
+  const cap = $('#reelCap');
+  const show = (n: number) => {
+    i = n % REEL.length;
+    const p = photo(REEL[i]);
+    fill(stage, h('img', { class: 'reel-img', src: SRC[REEL[i]], alt: p.label }));
+    cap.textContent = `${String(i + 1).padStart(2, '0')}/${String(REEL.length).padStart(2, '0')}  ${credit(p)}`;
+    for (const [k, b] of [...$('#reelStrip').children].entries()) b.classList.toggle('on', k === i);
+  };
+  fill($('#reelStrip'), ...REEL.map((id, k) => h('img', { src: SRC[id], alt: '', onclick: () => show(k) })));
+  show(0);
+  if (!reduceMotion) reelTimer = setInterval(() => show(i + 1), 4500);
 }

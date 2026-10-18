@@ -3,7 +3,7 @@
  * picture where it is shown. Pure data: the image files are attached in ui/photos.ts. */
 
 export interface Photo {
-  id: 'geobasket' | 'dunk' | 'rick' | 'ken' | 'lonely';
+  id: 'geobasket' | 'dunk' | 'rick' | 'ken' | 'lonely' | 'ken2' | 'lonely2' | 'lonely3' | 'rick2' | 'rick3' | 'jacket';
   /** What the author calls it. */
   label: string;
   author: string;
@@ -19,7 +19,17 @@ export const PHOTOS: Photo[] = [
   { id: 'rick', label: 'rick owens', author: 'Asha Mines', license: 'CC BY-SA 3.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/', page: 'https://commons.wikimedia.org/wiki/File:Rick_Owens_(cropped).jpg' },
   { id: 'ken', label: 'ken carson', author: 'dylanisswagger', license: 'CC BY 3.0', licenseUrl: 'https://creativecommons.org/licenses/by/3.0/', page: 'https://commons.wikimedia.org/wiki/File:Ken_Carson_live_on_Chaos_Tour_at_Milwaukee_2024.jpg' },
   { id: 'lonely', label: 'destroy lonely', author: 'Wojciech Pędzich', license: 'CC BY 4.0', licenseUrl: 'https://creativecommons.org/licenses/by/4.0/', page: 'https://commons.wikimedia.org/wiki/File:Destroy_Lonely,_Clout_Festival_2024_05_(cropped).jpg' },
+  { id: 'ken2', label: 'ken carson', author: 'xNicoNF', license: 'CC BY 4.0', licenseUrl: 'https://creativecommons.org/licenses/by/4.0/', page: 'https://commons.wikimedia.org/wiki/File:Ken_Carson_performing_live_during_WTF_Tour_in_D%C3%BCsseldorf_(2026).jpg' },
+  { id: 'lonely2', label: 'destroy lonely', author: 'Wojciech Pędzich', license: 'CC BY 4.0', licenseUrl: 'https://creativecommons.org/licenses/by/4.0/', page: 'https://commons.wikimedia.org/wiki/File:Destroy_Lonely,_Clout_Festival_2024_03.jpg' },
+  { id: 'lonely3', label: 'destroy lonely', author: 'Wojciech Pędzich', license: 'CC BY 4.0', licenseUrl: 'https://creativecommons.org/licenses/by/4.0/', page: 'https://commons.wikimedia.org/wiki/File:Destroy_Lonely,_Clout_Festival_2024_06_(cropped).jpg' },
+  { id: 'rick2', label: 'rick owens', author: 'Jtsimenc', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', page: 'https://commons.wikimedia.org/wiki/File:Rick_Owens_1.jpg' },
+  { id: 'rick3', label: 'rick owens, paris', author: 'Myles Kalus Anak Jihem', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', page: 'https://commons.wikimedia.org/wiki/File:Rick_Owens_Paris_Fashion_Week_RTW_Spring_Summer_2019.jpg' },
+  { id: 'jacket', label: 'jacket', author: 'Staff photographer, Rhode Island School of Design Museum of Art', license: 'CC0 1.0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/', page: 'https://commons.wikimedia.org/wiki/File:2008_Rick_Owens_woman%27s_jacket,_leather,_cotton,_and_rayon_01.jpg' },
 ];
+
+/** The photos that cycle on the front page, in order. */
+export const REEL: Photo['id'][] = ['ken2', 'rick3', 'lonely2', 'jacket', 'ken', 'rick2', 'lonely3', 'geobasket', 'lonely', 'dunk', 'rick'];
+
 
 /** Which photo lies over the chart of each market (index = level; the last is the daily tape). */
 export const CHART_PHOTO: Photo['id'][] = ['geobasket', 'dunk', 'ken', 'lonely', 'rick', 'ken'];

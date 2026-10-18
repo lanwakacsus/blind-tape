@@ -165,6 +165,9 @@ describe('the jokes are in, and every photo is credited', () => {
     expect(document.querySelectorAll('#season .node-icon')).toHaveLength(5);
     expect($('#season').textContent).toMatch(/GEO.*RMN.*KSS.*DRK.*TCT/);
     expect(document.querySelectorAll('.musicToggle')).toHaveLength(2);
+    expect(document.querySelectorAll('#reelStrip img')).toHaveLength(11);
+    expect($('#reelStage img')).not.toBeNull();
+    expect($('#reelCap').textContent).toMatch(/Wikimedia Commons/);
     expect($('svg.shoe').getAttribute('aria-label')).toMatch(/drawn from memory/);
     expect($('.rules').textContent).toMatch(/DO NOT ASK ABOUT THE SHOES/);
   });

@@ -48,11 +48,11 @@ describe('the markets are about something', () => {
   });
 });
 
-import { CHART_PHOTO, PHOTOS, credit, creditsPage, photo } from '../src/game/credits';
+import { CHART_PHOTO, PHOTOS, REEL, credit, creditsPage, photo } from '../src/game/credits';
 
 describe('photographs', () => {
   it('credits every photo with an author, a licence and a Commons page', () => {
-    expect(PHOTOS).toHaveLength(5);
+    expect(PHOTOS).toHaveLength(11);
     for (const p of PHOTOS) {
       expect(p.author.length).toBeGreaterThan(2);
       expect(p.license).toMatch(/^CC/);
@@ -71,5 +71,13 @@ describe('photographs', () => {
   it('serves /credits and shows a photo on the pages about the things in them', () => {
     expect((resolveRoute('/credits') as any).body).toMatch(/freely licensed/);
     for (const p of ['/geobasket', '/dunks', '/rick-owens', '/ken-carson', '/destroy-lonely']) expect((resolveRoute(p) as any).photo).toBeDefined();
+  });
+});
+
+describe('the reel', () => {
+  it('shows only credited photos, each once', () => {
+    expect(new Set(REEL).size).toBe(REEL.length);
+    for (const id of REEL) expect(credit(photo(id))).toMatch(/photo: .+, CC/);
+    expect(new Set(PHOTOS.map((p) => p.id)).size).toBe(PHOTOS.length);
   });
 });
