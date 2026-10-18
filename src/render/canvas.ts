@@ -2,13 +2,18 @@
 
 import type { Bar } from '../engine/market';
 
-export const MONO = '11px "Chivo Mono", ui-monospace, Menlo, monospace';
+export const MONO = '11px "Courier New", Courier, monospace';
 
-const colorCache: Record<string, string> = {};
+/** The canvas being drawn. Colours come from its own computed style, so a chart can have its
+ *  own palette (a white graph with green and red) while the rest of the page does not. */
+let scope: Element = document.documentElement;
+const caches = new WeakMap<Element, Record<string, string>>();
 
-/** Resolves a CSS custom property (e.g. '--up') to its colour, cached. */
+/** Resolves a CSS custom property (e.g. '--up') on the canvas being drawn, cached. */
 export function col(cssVar: string): string {
-  return (colorCache[cssVar] ||= getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim());
+  let cache = caches.get(scope);
+  if (!cache) caches.set(scope, (cache = {}));
+  return (cache[cssVar] ||= getComputedStyle(scope).getPropertyValue(cssVar).trim());
 }
 
 export interface Surface {
@@ -20,6 +25,7 @@ export interface Surface {
 
 /** Sizes the backing store to the element at device pixel ratio and clears it. */
 export function setupCanvas(c: HTMLCanvasElement): Surface {
+  scope = c;
   const dpr = window.devicePixelRatio || 1;
   const w = c.clientWidth;
   const h = c.clientHeight;
@@ -120,7 +126,9 @@ export interface CandleStyle {
   wickX?: number;
 }
 
-/** One OHLC candle centred on x, coloured up or down. */
+/** One OHLC candle centred on x. Up candles are solid in the up colour; down candles are
+ *  hollow in the down colour, so direction reads from shape as well as colour. Bodies too
+ *  small to show an outline stay solid. */
 export function drawCandle(
   ctx: CanvasRenderingContext2D,
   Y: (v: number) => number,
@@ -128,17 +136,30 @@ export function drawCandle(
   b: Bar,
   style: CandleStyle,
 ): void {
-  const color = col(b.c >= b.o ? '--up' : '--down');
-  ctx.strokeStyle = ctx.fillStyle = color;
+  const up = b.c >= b.o;
+  ctx.strokeStyle = ctx.fillStyle = col(up ? '--up' : '--down');
   ctx.lineWidth = 1;
   const wx = style.wickX ?? Math.round(x) + 0.5;
-  ctx.beginPath();
-  ctx.moveTo(wx, Y(b.h));
-  ctx.lineTo(wx, Y(b.l));
-  ctx.stroke();
   const top = Y(Math.max(b.o, b.c));
   const bottom = Y(Math.min(b.o, b.c));
-  ctx.fillRect(x - style.bodyWidth / 2, top, style.bodyWidth, Math.max(style.minBody, bottom - top));
+  const height = Math.max(style.minBody, bottom - top);
+  const left = x - style.bodyWidth / 2;
+  const hollow = !up && style.bodyWidth >= 4 && height >= 3;
+
+  ctx.beginPath();
+  if (hollow) {
+    ctx.moveTo(wx, Y(b.h));
+    ctx.lineTo(wx, top);
+    ctx.moveTo(wx, top + height);
+    ctx.lineTo(wx, Y(b.l));
+  } else {
+    ctx.moveTo(wx, Y(b.h));
+    ctx.lineTo(wx, Y(b.l));
+  }
+  ctx.stroke();
+
+  if (hollow) ctx.strokeRect(Math.round(left) + 0.5, Math.round(top) + 0.5, Math.round(style.bodyWidth) - 1, Math.round(height) - 1);
+  else ctx.fillRect(left, top, style.bodyWidth, height);
 }
 
 /** Vertical dashed marker between history and the traded part of the tape. */

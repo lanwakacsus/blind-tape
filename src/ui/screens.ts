@@ -1,8 +1,8 @@
-/* One screen at a time: title → play → debrief. */
+/* One screen at a time: title → play → debrief, plus the author's notes. */
 
 import { $ } from './dom';
 
-export type ScreenId = 'title' | 'play' | 'debrief';
+export type ScreenId = 'title' | 'play' | 'debrief' | 'notes' | 'claims' | 'quotes' | 'journal' | 'archive' | 'page';
 
 let current: ScreenId = 'title';
 const enterHandlers: Partial<Record<ScreenId, () => void>> = {};
@@ -16,6 +16,6 @@ export function onEnter(id: ScreenId, fn: () => void): void {
 
 export function showScreen(id: ScreenId): void {
   current = id;
-  for (const s of ['title', 'play', 'debrief'] as const) $('#' + s).hidden = s !== id;
+  for (const s of ['title', 'play', 'debrief', 'notes', 'claims', 'quotes', 'journal', 'archive', 'page'] as const) $('#' + s).hidden = s !== id;
   enterHandlers[id]?.();
 }

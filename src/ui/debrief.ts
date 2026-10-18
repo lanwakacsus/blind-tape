@@ -3,6 +3,7 @@
 
 import { backtest, stats, type Stats } from '../engine/backtest';
 import { LEVELS, REGIMES, type Market } from '../engine/market';
+import { HORIZON } from '../engine/news';
 import { agreement, tuningCheck } from '../engine/research';
 import { STRATS } from '../engine/strategies';
 import { canPost, finishDailyRun } from '../daily/remote';
@@ -10,9 +11,13 @@ import { dailyNo, dayLabel } from '../daily/dates';
 import { shareGrid } from '../daily/share';
 import { ordinal, pct, signClass } from '../format';
 import { playLevel, replay } from '../game/actions';
+import { body, stamp, type Entry } from '../game/diary';
+import { verdict } from '../game/lore';
+import { dayLabel as isoLabel } from '../game/quotes';
+import { review, reviewNotes } from '../game/review';
 import { game, isDailyMode, type Round } from '../game/round';
 import { STAR_GOALS, playerExposure, scoreRound, type RoundScore } from '../game/scoring';
-import { lab, persist, save } from '../game/save';
+import { lab, persist, recordJournal, recordRound, save } from '../game/save';
 import { drawEquityChart, drawTapeChart } from '../render/debriefCharts';
 import { renderDailyDebrief } from './daily';
 import { $, classes, fill, find, h } from './dom';
@@ -20,6 +25,16 @@ import { renderLab, resetLab } from './lab';
 import { currentScreen, onEnter, showScreen } from './screens';
 
 type Tab = 'race' | 'lab';
+
+/** In greyscale the lines need telling apart by pattern, not only by shade. */
+const DASHES: Record<string, number[] | undefined> = {
+  sma: [10, 3],
+  mom: [3, 3],
+  don: [10, 3, 2, 3],
+  rsi: [1, 4],
+  bb: [6, 2],
+  ghost: [6, 4],
+};
 
 const view = {
   score: null as RoundScore | null,
@@ -33,6 +48,25 @@ export function showDebrief(r: Round): void {
   const score = scoreRound(r, game.bots, lab);
   view.score = score;
   view.shade = 'you';
+  const rv = review(ownTrades(r), r.fees);
+  recordJournal({
+    ts: Date.now(),
+    mode: r.mode,
+    market: eyebrow(r),
+    lvl: r.lvl,
+    ret: score.ys.ret,
+    bhRet: score.bhRet,
+    dd: score.ys.dd,
+    sharpe: score.ys.sharpe,
+    grade: score.grade,
+    trades: rv.trades,
+    winRate: rv.winRate,
+    expectancy: rv.expectancy,
+    profitFactor: rv.profitFactor != null && Number.isFinite(rv.profitFactor) ? rv.profitFactor : null,
+    fees: r.fees,
+    stops: r.stops,
+    stopUsed: ownTrades(r).some((t) => t.r != null),
+  });
   if (r.mode === 'season') {
     save.stars[r.lvl!] = Math.max(save.stars[r.lvl!], score.stars);
     persist();
@@ -50,6 +84,7 @@ export function showDebrief(r: Round): void {
     });
   }
 
+  renderFound(recordRound());
   fill($('#debHead'), header(r, score));
   renderActions(r, score);
   const daily = isDailyMode(r.mode);
@@ -60,6 +95,7 @@ export function showDebrief(r: Round): void {
     $('#shadeSel'),
     h('option', { value: 'you' }, 'You'),
     ...STRATS.map((S) => h('option', { value: S.id }, `${S.call} · ${S.name}`)),
+    h('option', { value: 'ghost' }, 'M. · left running'),
   );
   resetLab();
   showScreen('debrief');
@@ -67,11 +103,22 @@ export function showDebrief(r: Round): void {
   (find('#dNext') || $('#dRetry')).focus({ preventScroll: true });
 }
 
+/** Shows whatever this round brought back from the author's diary. */
+function renderFound(found: Entry[]): void {
+  $('#loreBox').hidden = found.length === 0;
+  if (!found.length) return;
+  fill(
+    $('#loreBody'),
+    ...[...found].reverse().map((e) => h('article', null, h('time', null, stamp(e)), h('p', null, body(e)))),
+  );
+}
+
 function headline(r: Round, cleared: boolean): string {
   const { mode, lvl } = r;
   if (mode === 'daily') return canPost() ? 'Run posted' : 'Run saved';
   if (mode === 'practice') return 'Practice run';
   if (mode === 'proof') return 'Hidden tape finished';
+  if (mode === 'archive') return 'Archived tape finished';
   if (lvl == null) return 'Tape finished';
   if (!cleared) return 'Not cleared';
   return lvl === LEVELS.length - 1 ? 'Season cleared' : 'Market cleared';
@@ -80,6 +127,7 @@ function headline(r: Round, cleared: boolean): string {
 function eyebrow(r: Round): string {
   const { m, mode, lvl } = r;
   if (mode === 'proof') return 'Tuning check · fresh market';
+  if (mode === 'archive') return `Archive · ${isoLabel(m.day!)}`;
   if (isDailyMode(mode)) return `Daily #${dailyNo(m.day!)} · ${dayLabel(m.day!)}` + (mode === 'practice' ? ' · practice' : '');
   if (lvl == null) return m.name!;
   return `Market ${lvl + 1} · ${LEVELS[lvl].sub}`;
@@ -106,7 +154,7 @@ function header(r: Round, s: RoundScore): HTMLElement {
   const signed = (v: number) => h('b', { class: classes('mono', signClass(v)) }, pct(v));
   return h(
     'div',
-    { class: 'deb-head' },
+    { class: classes('deb-head', s.ys.ret < 0 && 'lost') },
     h('div', { class: 'place' }, ordinal(s.place), h('span', null, `of ${s.total} racers`)),
     h(
       'div',
@@ -120,8 +168,11 @@ function header(r: Round, s: RoundScore): HTMLElement {
         signed(s.ys.ret),
         ' · INDEX ',
         signed(s.bhRet),
-        ` · ${r.nTrades} trades · ${winRate} winners · best streak ${r.bestStreak} · worst drawdown ${pct(s.ys.dd)}`,
+        ` · ${r.nTrades} trades · ${winRate} winners · best streak ${r.bestStreak} · worst drawdown ${pct(s.ys.dd)}` + (r.stops ? ` · stopped out ${r.stops}×` : ''),
+        ' · risk grade ',
+        h('b', { class: classes('grade', 'g' + s.grade) }, s.grade),
       ),
+      h('p', { class: 'oracle' }, verdict({ ret: s.ys.ret, bhRet: s.bhRet, trades: r.nTrades })),
       regimeTape(r.m),
     ),
     h(
@@ -147,6 +198,7 @@ function renderActions(r: Round, s: RoundScore): void {
       isDailyMode(mode) ? 'Practice this tape' : 'Replay this tape',
     ),
     hasNext && !cleared && h('span', { class: 'small', style: 'align-self:center' }, `Earn one star to unlock market ${lvl! + 2}.`),
+    mode === 'archive' && h('button', { class: 'btn', type: 'button', onclick: () => showScreen('archive') }, 'Back to the archive'),
     h('button', { class: 'btn', id: 'dMenu', type: 'button', onclick: () => showScreen('title') }, 'Menu'),
   );
 }
@@ -187,7 +239,17 @@ function standings(r: Round, s: RoundScore): StandingRow[] {
   const bots = game.bots
     .filter((b) => lab[b.S.id].on)
     .map((b) => ({ id: b.S.id, call: b.S.call, name: b.S.name, color: b.S.color, eq: b.eq, ...b.st, trades: b.trades, exposure: b.exposure }));
-  return [you, ...bots].sort((a, b) => b.ret - a.ret);
+  const ghost: StandingRow = {
+    id: 'ghost',
+    call: 'M.',
+    name: ['left running', 'left running, unwell', 'left running, sees ahead', 'left running, knows'][r.ghost.stage],
+    color: '--ink',
+    eq: r.ghost.eq,
+    ...r.ghost.st,
+    trades: r.ghost.trades,
+    exposure: r.ghost.exposure,
+  };
+  return [you, ...bots, ghost].sort((a, b) => b.ret - a.ret);
 }
 
 function standingRow(row: StandingRow): HTMLTableRowElement {
@@ -254,6 +316,71 @@ function renderPlayerReplay(r: Round, s: RoundScore): void {
   );
 }
 
+const EXITS: Record<string, string> = { market: 'market', target: 'profit target', 'stop-loss': 'stop-loss', end: 'held to the end', unknown: 'unknown' };
+
+/** The trades the player made. A trade the player did not make is listed, but not judged. */
+const ownTrades = (r: Round) => r.closedTrades.filter((t) => t.via !== 'unknown');
+
+/** The trades, the numbers working traders look at, and what they say about them. */
+function renderReview(r: Round): void {
+  const rv = review(ownTrades(r), r.fees);
+  const foreign = r.closedTrades.flatMap((t, i) => (t.via === 'unknown' ? [i + 1] : []));
+  const tile = (label: string, value: string, hint: string, tone = '') =>
+    h('div', { class: 'tile', title: hint }, h('span', null, label), h('b', { class: tone }, value));
+  const pf = rv.profitFactor == null ? '\u2014' : Number.isFinite(rv.profitFactor) ? rv.profitFactor.toFixed(2) : '\u221e';
+  fill(
+    $('#reviewTiles'),
+    tile('Trades', String(rv.trades), 'Trades you opened and closed. A trade still open when the tape ended counts as closed there.'),
+    tile('Win rate', rv.trades ? Math.round(rv.winRate * 100) + '%' : '\u2014', 'Share of trades that made money. Meaningless on its own: you also need to know how big the wins and losses are.'),
+    tile('Average win', rv.wins ? pct(rv.avgWin) : '\u2014', 'What a winning trade made, on average.', signClass(rv.avgWin)),
+    tile('Average loss', rv.losses ? pct(rv.avgLoss) : '\u2014', 'What a losing trade lost, on average.', signClass(rv.avgLoss)),
+    tile('Payoff ratio', rv.payoff == null ? '\u2014' : rv.payoff.toFixed(2), 'Average win divided by average loss. To break even you need a win rate of 1 / (1 + payoff): at a payoff of 1.5 that is 40%.'),
+    tile('Expectancy', rv.trades ? pct(rv.expectancy, 2) : '\u2014', 'The average result of one trade. Positive means that, if this repeated, you would make money per trade.', signClass(rv.expectancy)),
+    tile('Profit factor', pf, 'Total won divided by total lost. Above 1 you made money. Around 1.5 or more over many trades is solid.'),
+    tile('Fees paid', pct(-r.fees, 2), 'Every trade costs 0.10% (resting limit orders half that). This is the total, as a share of your starting account.', 'down'),
+    tile('Average hold', rv.trades ? `${rv.avgBars.toFixed(1)} bars` : '\u2014', 'How long a trade lasted, on average.'),
+  );
+  fill($('#reviewNotes'), ...reviewNotes(rv, foreign).map((line) => h('li', null, line)));
+  fill(
+    $('#reviewBody'),
+    ...r.closedTrades.map((t, i) =>
+      h(
+        'tr',
+        { style: 'cursor:default', class: t.via === 'unknown' ? 'phantom' : '' },
+        h('td', null, i + 1),
+        h('td', null, t.dir > 0 ? 'LONG' : 'SHORT'),
+        h('td', null, Math.round(t.size * 100) + '%'),
+        h('td', null, t.bars + 'd'),
+        h('td', { class: signClass(t.pnl) }, pct(t.pnl)),
+        h('td', { class: 'down' }, pct(t.mae)),
+        h('td', { class: 'up' }, pct(t.mfe)),
+        h('td', null, t.r == null ? '\u2014' : t.r.toFixed(2)),
+        h('td', null, EXITS[t.via]),
+      ),
+    ),
+  );
+}
+
+function renderWireRecap(r: Round): void {
+  $('#wireBox').hidden = r.news.length === 0;
+  if (!r.news.length) return;
+  const real = r.news.filter((n) => !n.diary);
+  const hits = real.filter((n) => n.followed).length;
+  $('#wireTally').textContent = `${hits} of ${real.length} headlines were followed by the move they hinted at`;
+  fill(
+    $('#wireBody'),
+    ...r.news.map((n) =>
+      h(
+        'tr',
+        { style: 'cursor:default' },
+        h('td', null, Math.max(0, n.at - (r.m.warm - 1))),
+        h('td', { style: 'white-space:normal;text-align:left;font-family:var(--f-body)' }, n.text),
+        h('td', { class: n.diary ? 'leak' : n.followed ? '' : 'small' }, n.diary ? 'Not a headline' : n.followed ? `${REGIMES[n.kind].label} within ${HORIZON}d` : 'Nothing: noise'),
+      ),
+    ),
+  );
+}
+
 function renderProof(r: Round): void {
   const box = $('#proofBox');
   box.hidden = !r.proof;
@@ -307,17 +434,19 @@ export function renderDebrief(): void {
     return;
   }
   renderProof(r);
+  renderWireRecap(r);
+  renderReview(r);
   renderPlayerReplay(r, s);
   const rows = standings(r, s);
   $<HTMLSelectElement>('#shadeSel').value = view.shade;
   fill($('#tbody'), ...rows.map(standingRow));
 
-  const shaded = view.shade === 'you' ? null : game.bots.find((b) => b.S.id === view.shade);
+  const shaded = view.shade === 'you' ? null : view.shade === 'ghost' ? { pos: r.ghost.pos } : game.bots.find((b) => b.S.id === view.shade);
   drawTapeChart($<HTMLCanvasElement>('#debPrice'), r.m, shaded ? shaded.pos : r.posBars, shaded ? null : r.trades);
   const highlighted = (id: string) => id === 'you' || id === view.shade;
   drawEquityChart(
     $<HTMLCanvasElement>('#debEq'),
-    rows.map((row) => ({ eq: row.eq, color: row.color, bold: highlighted(row.id), dim: !highlighted(row.id) })),
+    rows.map((row) => ({ eq: row.eq, color: row.color, bold: highlighted(row.id), dim: !highlighted(row.id), dash: DASHES[row.id] })),
     r.m.n - r.m.warm,
   );
 }
@@ -326,6 +455,7 @@ export function initDebrief(): void {
   onEnter('debrief', () => ($('#debrief').scrollTop = 0));
   $('#tabRaceBtn').addEventListener('click', () => setTab('race'));
   $('#tabLabBtn').addEventListener('click', () => setTab('lab'));
+  $('#loreBtn').addEventListener('click', () => showScreen('notes'));
   $<HTMLSelectElement>('#shadeSel').addEventListener('change', (e) => {
     view.shade = (e.target as HTMLSelectElement).value;
     renderDebrief();

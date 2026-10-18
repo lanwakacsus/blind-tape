@@ -1,12 +1,15 @@
 /* Keyboard, pointer and window events for the play and title screens. */
 
 import { playLevel } from '../game/actions';
-import { game, setFast, setPos } from '../game/round';
+import { SIZES, STOPS, TARGETS, game, setFast, setPos, setSize, setStop, setTarget } from '../game/round';
 import { nextLevel, persist, save } from '../game/save';
 import type { Position } from '../engine/strategies';
 import { $, $$ } from './dom';
-import { quit, togglePause } from './play';
-import { currentScreen } from './screens';
+import { beginRound, quit, syncPad, togglePause } from './play';
+import { currentScreen, showScreen } from './screens';
+
+/** Screens that are just something to read: Escape goes back to the title. */
+const READING: string[] = ['notes', 'claims', 'quotes', 'journal', 'archive', 'page'];
 
 function toggleMute(): void {
   save.muted = !save.muted;
@@ -26,6 +29,10 @@ function onKeyDown(e: KeyboardEvent): void {
     if (key === 'enter' && tag !== 'BUTTON' && tag !== 'LABEL') playLevel(nextLevel());
     return;
   }
+  if (READING.includes(currentScreen())) {
+    if (key === 'escape') showScreen('title');
+    return;
+  }
   if (currentScreen() !== 'play') return;
 
   const position: Record<string, Position> = { arrowup: 1, l: 1, w: 1, arrowdown: -1, s: -1, ' ': 0, f: 0 };
@@ -38,8 +45,18 @@ function onKeyDown(e: KeyboardEvent): void {
   } else if (key === 'p' || key === 'escape') {
     e.preventDefault();
     togglePause();
+  } else if (key === '1' || key === '2' || key === '3') {
+    setSize(SIZES[Number(key) - 1]);
+  } else if (key === 'enter') {
+    beginRound();
+  } else if (key === 't') {
+    const r = game.round;
+    if (r) setTarget(TARGETS[(TARGETS.indexOf(r.target as (typeof TARGETS)[number]) + 1) % TARGETS.length]);
   } else if (key === 'm') {
     $('#muteBtn').click();
+  } else if (key === 'x') {
+    const r = game.round;
+    if (r) setStop(STOPS[(STOPS.indexOf(r.stop as (typeof STOPS)[number]) + 1) % STOPS.length]);
   }
 }
 
@@ -56,6 +73,20 @@ export function initInput(): void {
     });
   }
 
+  for (const b of $$('[data-size]')) b.addEventListener('click', () => setSize(Number(b.dataset.size)));
+  for (const b of $$('[data-stop]')) b.addEventListener('click', () => setStop(Number(b.dataset.stop)));
+
+  for (const b of $$('[data-target]')) b.addEventListener('click', () => setTarget(Number(b.dataset.target)));
+
+  for (const b of $$('[data-ind]')) {
+    b.addEventListener('click', () => {
+      const key = b.dataset.ind as keyof typeof save.indicators;
+      save.indicators[key] = !save.indicators[key];
+      persist();
+      syncPad();
+    });
+  }
+
   const ff = $('#ffBtn');
   ff.addEventListener('pointerdown', (e) => {
     e.preventDefault();
@@ -64,11 +95,11 @@ export function initInput(): void {
   for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) ff.addEventListener(ev, () => setFast(false));
 
   $('#pauseBtn').addEventListener('click', () => togglePause());
+  $('#muteBtn').addEventListener('click', toggleMute);
   $('#menuBtn').addEventListener('click', () => {
     if (game.round?.phase === 'run') togglePause(true);
     else quit();
   });
-  $('#muteBtn').addEventListener('click', toggleMute);
 
   document.addEventListener('keydown', onKeyDown);
   document.addEventListener('keyup', (e) => {

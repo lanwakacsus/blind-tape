@@ -3,20 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Blind Tape</title>
+<title>Blind Tape - Main Page</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chivo+Mono:wght@400;600;700&family=Rubik:wght@400;500;600;700&display=swap">
+<meta name="robots" content="noindex, nofollow">
 <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
 <div id="app">
   <section id="title" class="screen" aria-label="Title screen">
     <canvas id="bgTape" aria-hidden="true"></canvas>
-    <div class="title-inner">
-      <h1 class="logo">Blind<span>Tape</span></h1>
-      <p class="tagline">The market runs on its own clock and you never see the next bar. Six trading bots race you on the same tape. Beat them, beat buy &amp; hold, and clear the season.</p>
+    <div class="title-inner wide">
+      <h1 class="logo">Blind Tape</h1>
+      <div class="cols">
+        <aside class="rail left" aria-label="Index of the site">
+          <section class="panel files"><h3>index of /</h3><ul id="fileList"></ul></section>
+          <section class="panel"><h3>status</h3><div id="statusBox"></div></section>
+          <section class="panel"><h3>contact</h3>
+            <div class="row2"><span>mail</span><a href="mailto:mhale@blindtape.example">mhale@blindtape.example</a></div>
+            <div class="row2"><span>hours</span><b>any</b></div>
+            <div class="row2"><span>received</span><b>4</b></div>
+            <div class="row2"><span>answered</span><b>4</b></div>
+          </section>
+        </aside>
+        <div class="center">
+      <section class="about" aria-label="About this game">
+        <div class="kicker">About this game</div>
+        <p>Blind Tape is a trading game I built so I could practise without losing money. The market runs on its own clock, one trading day at a time, and you never see the next bar. You go long, short or flat. You choose how big the position is, and whether a stop-loss or a profit target closes it for you. Every trade costs 0.10%, the same as the bots pay.</p>
+        <p>Six bots trade the same tape as you: buy and hold, a moving-average cross, momentum, a breakout, and two mean-reversion rules. After each round you can open the backtest lab, change their settings, sweep the parameters, and check them on 100 markets they have never seen. Please do that part. It is the reason I wrote this.</p>
+        <p>There is a seventh racer, M. It is the bot I used while I was building the game. I never turned it off. It has been improving. I have not touched the code.</p>
+        <p>Earn stars by finishing in profit, by beating buy and hold, and by finishing first. One star opens the next market. The daily tape is the same for everyone and changes at 00:00 UTC. Your first run counts.</p>
+        <p>I would like to meet everyone who plays this. If you play it, write to me: <a href="mailto:mhale@blindtape.example">mhale@blindtape.example</a>. Any hour is fine. I answer every email.</p>
+        <p class="sig">&mdash; M. Hale, August 2010</p>
+        <p class="edit">edited 14 March 2011: I used to answer every email the same day. I got four. Write anyway.</p>
+      </section>
+      <div class="boot" id="boot"></div>
+      <section class="posts" aria-label="Announcements from the author">
+        <h2>ANNOUNCEMENTS <small>newest first</small></h2>
+        <div id="postList"></div>
+        <div><button class="btn" id="postsAll" type="button">Read all of them</button></div>
+      </section>
+      <figure class="epigraph" id="epigraph"></figure>
       <div class="howto">
         <span><kbd>↑</kbd> or <kbd>L</kbd> go long</span>
         <span><kbd>↓</kbd> or <kbd>S</kbd> go short</span>
@@ -43,11 +69,81 @@
         <button class="btn primary" id="playBtn" type="button">Play</button>
         <label class="btn" for="csvIn">Trade your own CSV</label>
         <input class="file-in" id="csvIn" type="file" accept=".csv,text/csv,text/plain">
+        <button class="btn" id="claimsBtn" type="button">Test his claims</button>
+        <button class="btn" id="journalBtn" type="button">Your journal</button>
+        <button class="btn" id="archiveBtn" type="button">Tape archive</button>
+        <button class="btn" id="notesBtn" type="button">Read the notes</button>
         <button class="btn" id="seasonBtn" type="button">New season</button>
         <span class="mono" id="starTotal" style="color:var(--gold)"></span>
       </div>
       <div class="err" id="csvErr" hidden></div>
       <p class="small">Each market is 150 trading days, about a minute of play, and each one runs faster and wilder than the last. Earn at least one star to unlock the next. Every trade costs 0.10%.</p>
+      <section class="rules" aria-label="Read this first">
+        <h2>READ THIS FIRST</h2>
+        <ol>
+          <li>THE NEXT BAR DOES NOT EXIST UNTIL IT IS <mark>PAID FOR</mark>.</li>
+          <li>EVERY HEADLINE IS TRUE OR IT IS BAIT. THERE IS NO THIRD KIND.</li>
+          <li>A GRIND RUNS 25 TO 60 BARS. A CRASH RUNS 4 TO 10. LEARN THE TABLE. I HAVE IT ON THE WALL.</li>
+          <li>EVERY TRADE COSTS 0.10%. THAT IS NOT A FEE. THAT IS A <mark>TOLL</mark>.</li>
+          <li>DO NOT TRADE AFTER 3 AM. THIS IS NOT A SUGGESTION.</li>
+          <li>THE BOTS ARE NOT YOUR FRIENDS. ONE OF THEM IS <mark>WATCHING</mark>.</li>
+          <li>IF THE COUNTER SAYS 1, THAT IS YOU. IF IT SAYS 2, CLOSE THE TAB.</li>
+          <li>NO SCREENSHOTS. NO QUESTIONS.</li>
+        </ol>
+      </section>
+      <section class="ruledout" aria-label="Things I have ruled out">
+        <h2>THINGS I HAVE RULED OUT</h2>
+        <ul>
+          <li><s>the host</s></li>
+          <li><s>the browser</s></li>
+          <li><s>my own code</s></li>
+          <li><s>the seed</s> <small>(it is the seed)</small></li>
+          <li><s>the bots</s> <small>except one</small></li>
+          <li><s>the neighbours</s></li>
+          <li>you <small>(not yet)</small></li>
+        </ul>
+      </section>
+      <section class="seedlog" aria-label="The seed log">
+        <h2>THE SEED LOG</h2>
+        <p class="small">i keep this every day. look at the numbers.</p>
+        <div class="tbl-wrap"><table><thead><tr><th>DAY</th><th>SEED</th><th>FIRST CRASH</th><th></th></tr></thead><tbody id="seedBody"></tbody></table></div>
+      </section>
+        </div>
+        <aside class="rail right" aria-label="Changelog and notes to self">
+          <section class="panel"><h3>changelog</h3>
+            <ul class="changelog">
+              <li><b>v2.5</b> unreleased<br>archive page. not releasing until the seed log is explained</li>
+              <li><b>v2.4</b> 21 feb 2011<br>news wire</li>
+              <li><b>v2.3</b> 11 nov 2010<br>backtester fixed</li>
+              <li><b>v2.2</b> 02 oct 2010<br>out-of-sample check on fresh markets</li>
+              <li><b>v2.1</b> 14 sep 2010<br>daily tape</li>
+              <li><b>v2.0</b> 24 aug 2010<br>the bots race you</li>
+              <li><b>v1.0</b> 03 aug 2010<br>launched</li>
+            </ul>
+          </section>
+          <section class="panel"><h3>known issues</h3>
+            <ul>
+              <li>the daily tape does not repeat (reported by me, four times)</li>
+              <li>M. is not supposed to improve</li>
+              <li>a crash is never 11 bars</li>
+              <li>the page reloads when nobody is here</li>
+              <li>the counter is correct</li>
+            </ul>
+          </section>
+          <section class="panel"><h3>todo</h3>
+            <ul class="todo">
+              <li class="done">volume bars</li>
+              <li class="done">stop-loss</li>
+              <li class="done">profit target</li>
+              <li>check the 151st bar again</li>
+              <li>fix rounding on the 0.10% fee</li>
+              <li>sleep</li>
+            </ul>
+          </section>
+          <section class="panel"><h3>seeds, last 24</h3><pre id="rawSeeds"></pre></section>
+        </aside>
+      </div>
+      <footer class="sitefoot" id="sitefoot"></footer>
     </div>
   </section>
 
@@ -63,13 +159,21 @@
     <div class="arena">
       <div class="chartwrap" id="chartwrap">
         <canvas id="live" aria-label="Live price chart"></canvas>
-        <div class="pnl"><div class="pnl-v" id="pnl">+0.00%</div><div class="pnl-sub"><span class="chip" id="posChip">FLAT</span><span class="chip streak" id="streakChip" hidden></span></div></div>
+        <div class="pnl"><div class="pnl-v" id="pnl">+0.00%</div><div class="pnl-sub"><span class="chip" id="posChip">FLAT</span><span class="chip streak" id="streakChip" hidden></span><span class="chip" id="ruleChip" hidden></span></div></div>
+        <div class="mline" id="mline" aria-live="polite"></div>
+        <div class="wire" id="wire" aria-live="polite" aria-label="News wire"></div>
         <div class="callout" id="callout" hidden></div>
         <div class="overlay" id="overlay" hidden></div>
       </div>
       <aside class="ladder" aria-label="Race standings"><div class="lad-h">RACE</div><ol id="ladder"></ol></aside>
     </div>
     <footer class="pad">
+      <div class="risk" aria-label="Risk controls">
+        <div class="seg" role="group" aria-label="Position size"><span>SIZE <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span><button type="button" data-size="0.25">25%</button><button type="button" data-size="0.5">50%</button><button type="button" data-size="1">100%</button></div>
+        <div class="seg" role="group" aria-label="Indicators"><span>VIEW</span><button type="button" data-ind="ma" title="Moving averages, 20 and 50 bars. Price above both, with both rising, is an uptrend.">MA</button><button type="button" data-ind="bb" title="Bollinger bands: the 20-bar average plus and minus 2 standard deviations. Wide bands mean a volatile market.">BB</button><button type="button" data-ind="vol" title="Volume. A big move on heavy volume means more than the same move on light volume.">VOL</button><button type="button" data-ind="rsi" title="RSI, 14 bars. Above 70 is stretched, below 30 is oversold. In a strong trend it can stay there a long time.">RSI</button><button type="button" data-ind="atr" title="Average true range: how far a bar typically travels. A stop tighter than one ATR is mostly noise.">ATR</button></div>
+        <div class="seg" role="group" aria-label="Stop loss"><span>STOP <kbd>X</kbd></span><button type="button" data-stop="0">OFF</button><button type="button" data-stop="0.02">2%</button><button type="button" data-stop="0.05">5%</button><button type="button" data-stop="0.1">10%</button></div>
+        <div class="seg" role="group" aria-label="Profit target"><span>TARGET <kbd>T</kbd></span><button type="button" data-target="0" title="No profit target: you decide when to take it.">OFF</button><button type="button" data-target="0.03">3%</button><button type="button" data-target="0.06">6%</button><button type="button" data-target="0.1">10%</button><span id="rrNote" class="rr" title="Reward against risk. At 2 : 1 you can be wrong two times in three and still break even."></span></div>
+      </div>
       <button class="act short" data-p="-1" type="button" aria-pressed="false">SHORT<small>↓ / S</small></button>
       <button class="act flat" data-p="0" type="button" aria-pressed="true">FLAT<small>SPACE</small></button>
       <button class="act long" data-p="1" type="button" aria-pressed="false">LONG<small>↑ / L</small></button>
@@ -77,8 +181,77 @@
     </footer>
   </section>
 
+  <section id="notes" class="screen" hidden aria-label="Notes from the author">
+    <div class="notes-wrap">
+      <div class="notes-top"><button class="btn" id="notesBack" type="button">&larr; Back</button></div>
+      <h2 class="notes-title">NOTES FROM THE AUTHOR</h2>
+      <div id="notesEntries"></div>
+    </div>
+  </section>
+
+  <section id="claims" class="screen" hidden aria-label="The author's claims">
+    <div class="notes-wrap">
+      <div class="notes-top"><button class="btn" id="claimsBack" type="button">&larr; Back</button><span class="small" id="claimsCount"></span></div>
+      <h2 class="notes-title">THE CLAIMS</h2>
+      <p class="claims-intro">He wrote these down and never checked them. Test each one on a sample of markets, then rule on it. Be careful with small samples: they lie.</p>
+      <div class="box lore" id="claimsFound" hidden>
+        <div class="box-h"><h3>A note from the author</h3></div>
+        <div id="claimsFoundBody"></div>
+      </div>
+      <div id="claimsList"></div>
+    </div>
+  </section>
+
+  <section id="quotes" class="screen" hidden aria-label="Quotes the author kept">
+    <div class="notes-wrap">
+      <div class="notes-top"><button class="btn" id="quotesBack" type="button">&larr; Back</button></div>
+      <h2 class="notes-title">QUOTES I LIKE</h2>
+      <div id="quoteList"></div>
+    </div>
+  </section>
+
+  <section id="journal" class="screen" hidden aria-label="Your journal">
+    <div class="notes-wrap">
+      <div class="notes-top"><button class="btn" id="journalBack" type="button">&larr; Back</button><span class="small" id="journalCount"></span></div>
+      <h2 class="notes-title">JOURNAL</h2>
+      <p class="claims-intro">If you would like to show me your rounds, write to me. I would like to see how you trade. <a href="mailto:mhale@blindtape.example">mhale@blindtape.example</a></p>
+      <div class="tiles" id="journalTiles"></div>
+      <h3>What I noticed</h3>
+      <ul class="review-notes" id="journalHabits"></ul>
+      <h3>Your last rounds</h3>
+      <div class="spark" id="journalSpark" aria-label="Return of each recent round"></div>
+      <h3>By market</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>Market</th><th>Rounds</th><th>Average</th></tr></thead><tbody id="journalMarkets"></tbody></table></div>
+      <h3>Rounds</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>When</th><th>Market</th><th>You</th><th>Hold</th><th>Max DD</th><th>Trades</th><th>Grade</th></tr></thead><tbody id="journalRounds"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="archive" class="screen" hidden aria-label="Tape archive">
+    <div class="notes-wrap wide">
+      <div class="notes-top"><button class="btn" id="archiveBack" type="button">&larr; Back</button><span class="small" id="archiveCount"></span></div>
+      <h2 class="notes-title">TAPE ARCHIVE</h2>
+      <p class="claims-intro">Every daily tape from launch to his last night. Replay any of them. His marks are in the margin.</p>
+      <div class="seg" role="group" aria-label="Filter"><button type="button" data-filter="all">All</button><button type="button" data-filter="crash">With a crash</button><button type="button" data-filter="marks">His marks</button></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Day</th><th>Seed</th><th>What it did</th><th>First crash</th><th>Hold</th><th>Best bot</th><th>His mark</th><th></th></tr></thead><tbody id="archiveBody"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="page" class="screen" hidden aria-label="Page">
+    <div class="notes-wrap">
+      <div class="notes-top"><button class="btn" id="pageBack" type="button">&larr; Back</button></div>
+      <h2 class="notes-title" id="pageTitle"></h2>
+      <pre class="filebody" id="pageBody"></pre>
+      <div class="pagelinks" id="pageLinks"></div>
+    </div>
+  </section>
+
   <section id="debrief" class="screen" hidden aria-label="Round debrief">
     <div class="deb">
+      <div class="box lore" id="loreBox" hidden>
+        <div class="box-h"><h3>A note from the author</h3><button class="btn" id="loreBtn" type="button">Read all notes</button></div>
+        <div id="loreBody"></div>
+      </div>
       <div id="debHead"></div>
       <div class="deb-actions" id="debActions"></div>
       <div class="daily-deb" id="dailyDeb" hidden>
@@ -110,6 +283,16 @@
           <div class="box-h"><h3>Your round as a strategy</h3><span class="small">your positions run through the same backtester as the bots</span></div>
           <div class="tbl-wrap"><table><thead><tr><th>Run</th><th>Return</th><th>Sharpe</th><th>Max DD</th><th>Trades</th><th>In mkt</th></tr></thead><tbody id="replayBody"></tbody></table></div>
           <p class="note" id="replayNote"></p>
+        </div>
+        <div class="box" id="wireBox" hidden>
+          <div class="box-h"><h3>The wire, afterwards</h3><span class="small" id="wireTally"></span></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Day</th><th>Headline</th><th>What followed</th></tr></thead><tbody id="wireBody"></tbody></table></div>
+        </div>
+        <div class="box" id="reviewBox">
+          <div class="box-h"><h3>Trade review</h3><span class="small">the numbers working traders look at</span></div>
+          <div class="tiles" id="reviewTiles"></div>
+          <ul class="review-notes" id="reviewNotes"></ul>
+          <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Side</th><th>Size</th><th>Held</th><th>Result</th><th>Worst</th><th>Best</th><th>R</th><th>Exit</th></tr></thead><tbody id="reviewBody"></tbody></table></div>
         </div>
         <div class="race-grid">
           <div class="box"><div class="box-h"><h3>Equity race</h3></div><canvas id="debEq" aria-label="Equity curves"></canvas></div>

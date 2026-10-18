@@ -95,7 +95,7 @@ function drawRegimeStrip(
     ctx.fillRect(x0, y0, x1 - x0 - 1, height);
     ctx.globalAlpha = 1;
     ctx.fillStyle = col('--ink');
-    ctx.font = '10px "Chivo Mono", monospace';
+    ctx.font = '10px "Courier New", monospace';
     ctx.textAlign = 'left';
     if (x1 - x0 > ctx.measureText(R.label).width + 8) ctx.fillText(R.label, x0 + 4, y0 + height / 2 + 0.5);
   }
@@ -106,6 +106,8 @@ export interface EquitySeries {
   color: string;
   bold: boolean;
   dim: boolean;
+  /** Dash pattern for the line, if it should not be solid. */
+  dash?: number[];
 }
 
 /** Equity curves of every racer, bold ones drawn last so they sit on top. */
@@ -151,7 +153,9 @@ export function drawEquityChart(canvas: HTMLCanvasElement, series: EquitySeries[
     ctx.lineWidth = s.bold ? 2.5 : 1.25;
     ctx.globalAlpha = s.dim ? 0.4 : 1;
     ctx.lineJoin = 'round';
+    ctx.setLineDash(s.dash ?? []);
     ctx.stroke();
+    ctx.setLineDash([]);
     ctx.globalAlpha = 1;
     const last = s.eq.length - 1;
     ctx.fillStyle = color;

@@ -1,12 +1,17 @@
 /* The play screen: HUD, race ladder, action pad, countdown, pause overlay and the
  * callouts and floating P&L that react to the tape. Also owns the animation loop. */
 
-import { LEVELS } from '../engine/market';
+import { DAILY, LEVELS } from '../engine/market';
+import type { Headline } from '../engine/news';
 import { dailyNo } from '../daily/dates';
 import { reduceMotion } from '../env';
 import { pct, signClass } from '../format';
-import { beep } from '../game/sound';
-import { lab } from '../game/save';
+import { body as diaryBody, randomEntry, stamp } from '../game/diary';
+import { dayLabel as isoLabel } from '../game/quotes';
+import { OMENS, OMEN_FALLBACK } from '../game/lore';
+import { riskReward } from '../game/review';
+import { sfx } from '../game/sound';
+import { lab, progress, save } from '../game/save';
 import {
   advance,
   game,
@@ -20,7 +25,7 @@ import {
   type Round,
 } from '../game/round';
 import { drawLive } from '../render/liveChart';
-import { $, $$, fill, h, kbd } from './dom';
+import { $, $$, fill, h, kbd, type Child } from './dom';
 import { currentScreen, showScreen } from './screens';
 
 let countdownTimer: ReturnType<typeof setTimeout> | undefined;
@@ -32,16 +37,61 @@ function roundStarted(r: Round): void {
   clearTimeout(countdownTimer);
   const { m, lvl, mode } = r;
   $('#lvlName').textContent =
-    mode === 'proof' ? 'HIDDEN TAPE' : isDailyMode(mode) ? `DAILY #${dailyNo(m.day!)}` : lvl == null ? m.name! : `MARKET ${lvl + 1}`;
+    mode === 'archive' ? 'ARCHIVE' : mode === 'proof' ? 'HIDDEN TAPE' : isDailyMode(mode) ? `DAILY #${dailyNo(m.day!)}` : lvl == null ? m.name! : `MARKET ${lvl + 1}`;
   $('#lvlSub').textContent =
-    mode === 'proof'
+    mode === 'archive'
+      ? isoLabel(m.day!)
+      : mode === 'proof'
       ? 'Your tuned bots have never seen this'
       : mode === 'daily' ? 'Ranked run' : mode === 'practice' ? 'Practice, not ranked' : lvl == null ? 'Your CSV' : LEVELS[lvl].sub;
   $('#pauseBtn').textContent = 'Pause';
   showScreen('play');
+  $('#mline').classList.remove('show');
+  $('#overlay').classList.remove('ready');
   buildLadder();
+  renderWire(r);
   syncPad();
-  runCountdown(r);
+  showReady(r);
+}
+
+/* ---------- news wire ---------- */
+
+const WIRE_LINES = 3;
+
+function renderWire(r: Round): void {
+  const day = (item: Headline) => Math.max(0, item.at - (r.m.warm - 1));
+  fill(
+    $('#wire'),
+    ...r.wire.slice(-WIRE_LINES).map((item, i, shown) =>
+      h('div', { class: i === shown.length - 1 ? 'new' : '' }, h('b', null, `D${day(item)}`), item.text),
+    ),
+  );
+}
+
+let mlineTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** His remark on what you just did, on the chart for a few seconds. */
+function onComment(text: string, stage: number): void {
+  const el = $('#mline');
+  el.dataset.stage = String(stage);
+  fill(el, h('b', null, 'M.'), text);
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(mlineTimer);
+  mlineTimer = setTimeout(() => el.classList.remove('show'), 5200);
+}
+
+function onHeadline(item: Headline): void {
+  const r = game.round;
+  if (!r) return;
+  renderWire(r);
+  if (item.diary) {
+    callout(item.text, 'leak');
+    sfx.leak();
+  } else {
+    sfx.headline();
+  }
 }
 
 /** Registers the play screen as the round's view. `onFinished` runs once the tape is over. */
@@ -51,6 +101,8 @@ export function initPlay(onFinished: (r: Round) => void): void {
     positionChanged: syncPad,
     barClosed: updateLadder,
     callout,
+    headline: onHeadline,
+    comment: onComment,
     shake,
     float: floatText,
     finished: (r) => {
@@ -60,8 +112,14 @@ export function initPlay(onFinished: (r: Round) => void): void {
   requestAnimationFrame(frame);
 }
 
-function countdownHint(): Node[] {
+function countdownHint(r: Round): Child[] {
+  const brief = r.lvl != null ? LEVELS[r.lvl].brief : r.m.regimes ? DAILY.brief : null;
+  const opening = r.wire.at(-1);
+  const omen = r.lvl != null ? OMENS[r.lvl] : OMEN_FALLBACK;
   return [
+    h('blockquote', { class: 'omen' }, omen.text, h('cite', null, omen.source)),
+    r.rule && h('div', { class: 'brief rule' }, h('b', null, 'Rule for this market'), r.rule.text),
+    brief && h('div', { class: 'brief' }, h('b', null, 'Briefing'), brief, opening && h('em', null, opening.text)),
     h(
       'div',
       { class: 'cd-hint' },
@@ -74,6 +132,35 @@ function countdownHint(): Node[] {
   ];
 }
 
+/** Before the countdown nothing moves, so there is time to set size, stop, target and view. */
+function showReady(r: Round): void {
+  const overlay = $('#overlay');
+  overlay.hidden = false;
+  overlay.classList.add('ready');
+  const start = h('button', { class: 'btn primary start', type: 'button', onclick: () => beginRound() }, 'Start');
+  fill(
+    overlay,
+    h(
+      'div',
+      { class: 'ready-card' },
+      h('b', { class: 'ready-h' }, 'Get set'),
+      ...countdownHint(r),
+      h('div', { class: 'small' }, 'Nothing moves until you press Start. Set your size, stop, target and view first.'),
+      start,
+    ),
+  );
+  start.focus({ preventScroll: true });
+}
+
+/** Starts the countdown. Also bound to Enter. */
+export function beginRound(): void {
+  const r = game.round;
+  if (!r || r.phase !== 'ready' || currentScreen() !== 'play') return;
+  r.phase = 'countdown';
+  $('#overlay').classList.remove('ready');
+  runCountdown(r);
+}
+
 function runCountdown(r: Round): void {
   const overlay = $('#overlay');
   overlay.hidden = false;
@@ -81,13 +168,13 @@ function runCountdown(r: Round): void {
   const step = () => {
     if (currentScreen() !== 'play' || r.phase !== 'countdown') return;
     if (n > 0) {
-      fill(overlay, h('div', { class: 'cd' }, n), ...countdownHint());
-      beep(440, 0.09);
+      fill(overlay, h('div', { class: 'cd' }, n), ...countdownHint(r));
+      sfx.count(n);
       n--;
       countdownTimer = setTimeout(step, 700);
     } else {
       fill(overlay, h('div', { class: 'cd go' }, 'GO'));
-      beep(880, 0.18);
+      sfx.go();
       goLive(r);
       countdownTimer = setTimeout(() => {
         if (r.phase === 'run') overlay.hidden = true;
@@ -95,6 +182,12 @@ function runCountdown(r: Round): void {
     }
   };
   step();
+}
+
+/** While the tape is stopped, one of the author's entries is on screen. */
+function pausedNote(): HTMLElement {
+  const entry = randomEntry(progress());
+  return h('blockquote', { class: 'omen' }, diaryBody(entry), h('cite', null, stamp(entry)));
 }
 
 /** Toggles pause. `force` true only pauses, false only resumes. */
@@ -123,6 +216,7 @@ export function togglePause(force?: boolean): void {
         ' to resume',
         r.mode === 'daily' ? '. Quitting a ranked daily run posts a DNF.' : '',
       ),
+      pausedNote(),
     );
     resumeBtn.focus();
   } else if (r.phase === 'paused' && force !== true) {
@@ -140,6 +234,8 @@ export function quit(): void {
 
 /* ---------- animation loop ---------- */
 
+let dread = -1;
+
 function frame(now: number): void {
   requestAnimationFrame(frame);
   const r = game.round;
@@ -153,25 +249,51 @@ function frame(now: number): void {
 
 export function syncPad(): void {
   const r = game.round;
-  for (const b of $$('.act[data-p]')) b.setAttribute('aria-pressed', String(Number(b.dataset.p) === r?.pos));
+  for (const b of $$('.act[data-p]')) b.setAttribute('aria-pressed', String(Number(b.dataset.p) === Math.sign(r?.pos ?? 0)));
+  for (const b of $$('[data-ind]')) {
+    const key = b.dataset.ind as keyof typeof save.indicators;
+    b.setAttribute('aria-pressed', String(save.indicators[key]));
+    (b as HTMLButtonElement).disabled = key === 'vol' && r?.m.bars[0]?.v == null;
+  }
+  for (const b of $$('[data-target]')) b.setAttribute('aria-pressed', String(Number(b.dataset.target) === r?.target));
+  $('#rrNote').textContent = r?.stop && r.target ? riskReward(r.stop, r.target) : '';
+  for (const b of $$('[data-size]')) {
+    b.setAttribute('aria-pressed', String(Number(b.dataset.size) === r?.size));
+    (b as HTMLButtonElement).disabled = Number(b.dataset.size) > (r?.rule?.maxSize ?? 1);
+  }
+  for (const b of $$('[data-stop]')) {
+    b.setAttribute('aria-pressed', String(Number(b.dataset.stop) === r?.stop));
+    (b as HTMLButtonElement).disabled = !!r?.rule?.stop;
+  }
   $('#ffBtn').setAttribute('aria-pressed', String(!!r?.fast));
 }
 
 function updateHud(r: Round): void {
   const m = r.m;
   const ret = r.e - 1;
+  // The edges of the tape bleed and beat faster the deeper the loss.
+  const d = Math.round(Math.min(1, Math.max(0, -ret / 0.12)) * 20) / 20;
+  if (d !== dread) {
+    dread = d;
+    $('#chartwrap').style.setProperty('--dread', String(d));
+  }
   const pnl = $('#pnl');
   pnl.textContent = pct(ret, 2);
   pnl.className = 'pnl-v ' + signClass(ret);
 
   const chip = $('#posChip');
   if (r.pos) {
-    chip.textContent = `${r.pos > 0 ? 'LONG' : 'SHORT'} ${pct(r.e / r.entryE - 1, 1)}`;
+    chip.textContent = `${r.pos > 0 ? 'LONG' : 'SHORT'} ${Math.round(Math.abs(r.pos) * 100)}% ${pct(r.e / r.entryE - 1, 1)}`;
     chip.className = 'chip ' + (r.pos > 0 ? 'long' : 'short');
   } else {
     chip.textContent = 'FLAT';
     chip.className = 'chip';
   }
+
+  const ruleChip = $('#ruleChip');
+  const cap = r.rule?.maxTrades;
+  ruleChip.hidden = !cap;
+  if (cap) ruleChip.textContent = `${Math.max(0, cap - r.nTrades)} of ${cap} trades left`;
 
   const streak = $('#streakChip');
   streak.hidden = r.streak < 2;
@@ -202,12 +324,13 @@ interface Racer {
 
 function racers(): Racer[] {
   const bots = game.bots.filter((b) => lab[b.S.id].on).map((b) => ({ id: b.S.id, call: b.S.call, color: b.S.color }));
-  return [{ id: 'you', call: 'YOU', color: '--accent' }, ...bots];
+  return [{ id: 'you', call: 'YOU', color: '--accent' }, ...bots, { id: 'ghost', call: 'M.', color: '--ink' }];
 }
 
 /** Current return of a racer at the last closed bar. */
 function racerValue(r: Round, id: string): number {
   if (id === 'you') return r.e - 1;
+  if (id === 'ghost') return r.ghost.eq[r.bar - (r.m.warm - 1)] - 1;
   const bot = game.bots.find((b) => b.S.id === id)!;
   return bot.eq[r.bar - (r.m.warm - 1)] - 1;
 }
@@ -218,7 +341,7 @@ function buildLadder(): void {
     ...racers().map((r) =>
       h(
         'li',
-        { 'data-id': r.id, class: r.id === 'you' ? 'you' : '' },
+        { 'data-id': r.id, class: r.id === 'you' ? 'you' : r.id === 'ghost' ? 'ghost' : '' },
         h('span', { class: 'rk' }),
         h('span', { class: 'tag', style: `--c:var(${r.color})` }, r.call),
         h('span', { class: 'val' }),
@@ -263,7 +386,7 @@ function updateLadder(): void {
   if (r.leader !== null && top !== r.leader && day > 5 && day < playBars) {
     if (top === 'you') {
       callout('YOU TAKE THE LEAD', 'gold');
-      beep(988, 0.15, 'triangle', 0.05);
+      sfx.lead();
     } else if (r.leader === 'you') {
       callout(`${items[0].querySelector('.tag')!.textContent} PASSES YOU`, 'ink');
     }
@@ -281,7 +404,7 @@ function callout(text: string, kind: FxKind): void {
   void c.offsetWidth; // restart the animation
   c.classList.add('show');
   clearTimeout(calloutTimer);
-  calloutTimer = setTimeout(() => (c.hidden = true), 1150);
+  calloutTimer = setTimeout(() => (c.hidden = true), kind === 'leak' ? 2800 : 1150);
 }
 
 function shake(): void {

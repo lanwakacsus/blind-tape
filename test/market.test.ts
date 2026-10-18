@@ -36,7 +36,8 @@ describe('genMarket', () => {
     for (const c of legacy.markets) {
       const m = genMarket(c.seed, c.opts);
       expect(m.n).toBe(c.n);
-      expect(m.bars[m.n - 1]).toEqual(c.lastBar);
+      const { v: _volume, ...prices } = m.bars[m.n - 1];
+      expect(prices).toEqual(c.lastBar);
     }
   });
 });
@@ -123,5 +124,27 @@ describe('parseCSV', () => {
     expect(() => parseCSV('close\n')).toThrow(/fewer than two lines/);
     expect(() => parseCSV(['close', ...Array.from({ length: 50 }, () => '1')].join('\n'))).toThrow(/at least 100 rows of prices; found 50/);
     expect(() => parseCSV('name,ticker\nfoo,bar\nbaz,qux')).toThrow(/no price column/);
+  });
+
+  it('gives every bar a volume without changing a single price', () => {
+    for (const seed of [1, 42, 4242, 99990]) {
+      const m = genMarket(seed);
+      expect(m.bars.every((b) => Number.isInteger(b.v) && b.v! > 0)).toBe(true);
+      // The same prices come out of the daily tape build, which never knew about volume.
+      expect(genMarket(seed).closes).toEqual(m.closes);
+    }
+  });
+
+  it('runs volume high in a crash, low in chop, and higher on a gap', () => {
+    const avg = (kind: string) => {
+      const vs: number[] = [];
+      for (let seed = 1; seed <= 40; seed++) {
+        const m = genMarket(seed * 37);
+        for (const s of m.regimes!) if (s.k === kind) for (let t = s.from; t <= s.to; t++) vs.push(m.bars[t].v!);
+      }
+      return vs.reduce((a, b) => a + b, 0) / vs.length;
+    };
+    expect(avg('crash')).toBeGreaterThan(avg('chop') * 2);
+    expect(avg('melt')).toBeGreaterThan(avg('chop'));
   });
 });

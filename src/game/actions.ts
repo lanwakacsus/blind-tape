@@ -24,6 +24,7 @@ export function playDaily(ranked: boolean): void {
 export function replay(r: Round): void {
   const { m, lvl, mode } = r;
   if (mode === 'proof') startRound(genMarket(m.seed!, m.opts), lvl, mode, r.proof);
+  else if (mode === 'archive') startRound(dailyMarket(m.day!), null, 'archive');
   else if (isDailyMode(mode)) startRound(dailyMarket(m.day!), null, 'practice');
   else if (lvl == null) startRound(makeMarket({ ...m }), lvl, mode);
   else startRound(genMarket(m.seed!, m.opts), lvl, mode);

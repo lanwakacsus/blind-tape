@@ -7,7 +7,8 @@ import { SWEEP_FAST, SWEEP_SLOW, outOfSample, smaSweep, snapshotTuning, type Out
 import { STRATS, strategy, type NumberParam, type ParamDef, type Strategy, type StrategyId } from '../engine/strategies';
 import { pct, signClass } from '../format';
 import { computeBots, game, startRound, type Round } from '../game/round';
-import { lab, persist, randomSeed } from '../game/save';
+import { asideFor } from '../game/diary';
+import { lab, persist, progress, randomSeed } from '../game/save';
 import { $, classes, fill, h } from './dom';
 
 const ROBUST_INTRO =
@@ -83,6 +84,7 @@ function card(S: Strategy): HTMLElement {
       h('span', { class: 'm', id: `m-${S.id}` }),
     ),
     h('p', { class: 'desc' }, S.desc),
+    h('p', { class: 'aside', id: `aside-${S.id}`, hidden: true }),
     S.params.length > 0 && h('div', { class: 'params' }, ...S.params.map((p) => paramInput(S, p))),
   );
 }
@@ -202,6 +204,10 @@ export function renderLab(r: Round, bhRet: number): void {
     metric.textContent = pct(b.st.ret);
     metric.className = classes('m', signClass(b.st.ret));
     $('#card-' + b.S.id).classList.toggle('off', !lab[b.S.id].on);
+    const aside = $('#aside-' + b.S.id);
+    const line = asideFor(b.S.id, progress());
+    aside.hidden = !line;
+    aside.textContent = line ?? '';
   }
   renderSweep(r.m, bhRet);
 }

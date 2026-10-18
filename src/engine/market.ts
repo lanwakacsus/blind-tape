@@ -8,6 +8,8 @@ export interface Bar {
   h: number;
   l: number;
   c: number;
+  /** Shares traded. Absent on imported tapes that do not carry it. */
+  v?: number;
 }
 
 export type RegimeKey = 'grind' | 'selloff' | 'chop' | 'melt' | 'crash';
@@ -42,8 +44,24 @@ export interface MarketOptions {
   chopW?: number;
 }
 
+/** A restriction a season market puts on the player. */
+export interface Rule {
+  /** Most position changes allowed. Going flat is always allowed. */
+  maxTrades?: number;
+  /** Largest position, as a fraction of equity. */
+  maxSize?: number;
+  /** A stop-loss that is locked on, as a fraction lost on a trade. */
+  stop?: number;
+  text: string;
+}
+
 export interface Level extends MarketOptions {
+  rule?: Rule;
   sub: string;
+  /** One-line read of the session shown before the bell. */
+  brief: string;
+  /** Share of the news wire that is noise (0–1). Does not affect the price path. */
+  noise: number;
   /** Milliseconds per bar at normal speed. */
   ms: number;
 }
@@ -72,15 +90,15 @@ export const REGIMES: Record<RegimeKey, Regime> = {
 };
 
 export const LEVELS: Level[] = [
-  { sub: 'Calm open', ms: 400, volMul: 0.85, crashW: 0.15, chopW: 2 },
-  { sub: 'Trend season', ms: 330, volMul: 1, crashW: 0.4, chopW: 2.5 },
-  { sub: 'Choppy waters', ms: 280, volMul: 1.1, crashW: 0.5, chopW: 6 },
-  { sub: 'Crash risk', ms: 240, volMul: 1.2, crashW: 1.4, chopW: 3 },
-  { sub: 'Full tape', ms: 200, volMul: 1.35, crashW: 1, chopW: 3 },
+  { sub: 'Easy', brief: 'Quiet desks. The wire is mostly honest: when it moves, the tape usually follows.', noise: 0.1, ms: 400, volMul: 0.85, crashW: 0.15, chopW: 2 },
+  { sub: 'Normal', brief: 'Momentum desks are in charge. Headlines tend to land just ahead of the trend.', noise: 0.2, ms: 330, volMul: 1, crashW: 0.4, chopW: 2.5 },
+  { sub: 'Choppy', brief: 'Range-bound and jumpy. The wire is noisy; chasing every headline gets expensive.', noise: 0.35, rule: { maxTrades: 12, text: 'No more than 12 trades. Every one costs 0.10%.' }, ms: 280, volMul: 1.1, crashW: 0.5, chopW: 6 },
+  { sub: 'Crash Test', brief: 'Liquidity is thin. A scare headline buys you a few bars at best.', noise: 0.3, rule: { stop: 0.05, text: 'A 5% stop is locked on. You cannot turn it off.' }, ms: 240, volMul: 1.2, crashW: 1.4, chopW: 3 },
+  { sub: 'Hard', brief: 'Everything is moving and half the wire is rumor. Trust the tape over the headline.', noise: 0.5, rule: { maxSize: 0.5, maxTrades: 16, text: 'Half size at most, and no more than 16 trades.' }, ms: 200, volMul: 1.35, crashW: 1, chopW: 3 },
 ];
 
 /** Settings for the daily challenge. Changing these changes everyone's daily tape. */
-export const DAILY: Level = { sub: 'Daily tape', ms: 290, volMul: 1.1, crashW: 0.7, chopW: 3 };
+export const DAILY: Level = { sub: 'Daily tape', brief: 'Same wire for everyone today. Some of it is signal.', noise: 0.3, ms: 290, volMul: 1.1, crashW: 0.7, chopW: 3 };
 
 /** Small fast seeded PRNG returning floats in [0, 1). */
 export function mulberry32(seed: number): () => number {
@@ -170,7 +188,27 @@ export function genMarket(seed: number, o: MarketOptions = {}): Market {
     bars.push({ o: open, h: high, l: low, c: next });
     close = next;
   }
+  addVolume(bars, regimes, seed);
   return makeMarket({ bars, warm, seed, regimes, opts: o });
+}
+
+/** How much extra trading each regime draws. */
+const CROWD: Record<RegimeKey, number> = { grind: 0.2, selloff: 0.7, chop: 0, melt: 0.9, crash: 2 };
+
+/** Volume rises with the size of the move and the gap, and runs high in a panic. It comes from
+ *  its own random stream and is added after the prices, so it can never change them. */
+function addVolume(bars: Bar[], regimes: RegimeSpan[], seed: number): void {
+  const rnd = mulberry32((seed ^ 0x51ed270b) >>> 0);
+  let ri = 0;
+  bars.forEach((b, t) => {
+    while (regimes[ri].to < t) ri++;
+    const prev = t ? bars[t - 1].c : b.o;
+    const move = Math.abs(Math.log(b.c / prev)) / 0.012;
+    const gap = Math.abs(b.o / prev - 1) / 0.01;
+    const u1 = rnd() || 1e-9;
+    const noise = Math.exp(0.25 * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * rnd()));
+    b.v = Math.round(1_000_000 * (0.5 + 0.4 * move + 0.3 * gap + 0.3 * CROWD[regimes[ri].k]) * noise);
+  });
 }
 
 const CLOSE_NAMES = ['adj close', 'adj_close', 'close', 'price', 'last'];

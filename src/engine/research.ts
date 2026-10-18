@@ -94,9 +94,9 @@ export function outOfSample(m: Market, lab: LabSettings, count = 100): OutOfSamp
 }
 
 /** Share of tradable bars on which two position series hold the same position. */
-export function agreement(a: readonly Position[], b: readonly Position[], m: Market): number {
+export function agreement(a: readonly number[], b: readonly number[], m: Market): number {
   let same = 0;
-  for (let t = m.warm - 1; t < m.n - 1; t++) if ((a[t] || 0) === (b[t] || 0)) same++;
+  for (let t = m.warm - 1; t < m.n - 1; t++) if (Math.sign(a[t] || 0) === Math.sign(b[t] || 0)) same++;
   return same / (m.n - m.warm);
 }
 
